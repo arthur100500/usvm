@@ -267,9 +267,13 @@ class JcInterpreter(
 
             is JcConcreteMethodCallInst -> {
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
+
                 if (approximateMethod(scope, stmt)) {
+                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
                     return
                 }
+
+                println("\u001B[31m" + "Calling ${stmt.method}" + "\u001B[0m")
 
                 val entryPoint = applicationGraph.entryPoints(method).singleOrNull()
 
@@ -301,12 +305,13 @@ class JcInterpreter(
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
+                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
                     return
                 }
 
                 if (method.isFinal) {
                     // Case for approximated interfaces
-                    with (stmt) {
+                    with(stmt) {
                         scope.doWithState {
                             newStmt(JcConcreteMethodCallInst(location, method, arguments, returnSite))
                         }
@@ -318,14 +323,17 @@ class JcInterpreter(
             }
 
             is JcDynamicMethodCallInst -> {
+                println("\u001B[31m" + "Calling dynamic ${stmt.method}" + "\u001B[0m")
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
+                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
                     return
                 }
 
                 mockMethod(scope, stmt, stmt.dynamicCall.callSiteReturnType)
             }
+            else -> Unit
         }
     }
 

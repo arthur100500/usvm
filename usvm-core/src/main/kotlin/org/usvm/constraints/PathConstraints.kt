@@ -94,6 +94,16 @@ open class UPathConstraints<Type>(
                 typeConstraints.constraints()
     }
 
+    fun allConstraints(): Sequence<UBoolExpr> {
+        if (isFalse)
+            return sequenceOf(ctx.falseExpr)
+
+        return logicalConstraints.asSequence() +
+                equalityConstraints.allConstraints() +
+                numericConstraints.constraints() +
+                typeConstraints.constraints()
+    }
+
     @Suppress("UNCHECKED_CAST")
     operator fun plusAssign(constraint: UBoolExpr): Unit =
         with(constraint.uctx) {

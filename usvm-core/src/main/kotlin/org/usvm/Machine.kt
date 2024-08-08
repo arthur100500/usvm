@@ -93,6 +93,7 @@ abstract class UMachine<State : UState<*, *, *, *, *, State>> : AutoCloseable {
             if (!pathSelector.isEmpty()) {
                 val stopReason = stopStrategy.stopReason()
                 logger.debug { stopReason }
+                println("[USVM] Stopped: $stopReason")
             }
         }
     }

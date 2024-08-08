@@ -29,8 +29,16 @@ class UCallStack<Method, Statement> private constructor(
 
     fun penultimateMethod(): Method = stack[stack.lastIndex - 1].method
 
+    fun firstMethod(): Method = stack.first().method
+
     fun push(method: Method, returnSite: Statement?) {
         stack.add(UCallStackFrame(method, returnSite))
+    }
+
+    fun dropFromBottom(n: Int) {
+        for (i in 1..n) {
+            stack.removeFirst()
+        }
     }
 
     fun clone(): UCallStack<Method, Statement> {
