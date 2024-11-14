@@ -98,6 +98,7 @@ import kotlin.reflect.KFunction0
 import kotlin.reflect.KFunction1
 import kotlin.reflect.KFunction2
 import org.usvm.api.makeNullableSymbolicRefWithSameType
+import org.usvm.api.makeNullableSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
 import org.usvm.api.mapTypeStreamNotNull
 import org.usvm.api.readArrayIndex
@@ -205,6 +206,18 @@ class JcMethodApproximationResolver(
 
         if (enclosingClass.annotations.any { it.name == "org.springframework.stereotype.Service" }) {
             if (approximateSpringServiceMethod(methodCall)) return true
+        }
+        
+        if (className.contains("org.springframework.mock.web.MockHttpServletRequest")) {
+            if (approximateMockHttp(methodCall)) return true
+        }
+
+        if ("org\\.springframework\\.web\\.method\\.annotation\\.*ArgumentResolver".toRegex().matches(className)) {
+            if (approximateArgumentResolver(methodCall)) return true
+        }
+
+        if (className.contains("java.lang.String")) {
+            if (approximateStringMethod(methodCall)) return true
         }
 
         if (className == "java.lang.reflect.Method") {
@@ -678,6 +691,73 @@ class JcMethodApproximationResolver(
         }
 
         return result
+    }
+
+    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String) : Boolean {
+        return scope.calcOnState {
+            var storedHeader = getUserDefinedValue(userValueKey)
+
+            if (storedHeader == null) {
+                val newSymbolicHeader = scope.makeNullableSymbolicRef(ctx.stringType)?.asExpr(ctx.addressSort)
+                if (newSymbolicHeader == null) {
+                    logger.warn("Unable to create symbolic value for header")
+                    return@calcOnState false
+                }
+                userDefinedValues += Pair(userValueKey, newSymbolicHeader)
+                storedHeader = newSymbolicHeader
+            }
+
+            skipMethodInvocationWithValue(methodCall, storedHeader)
+            return@calcOnState true
+        }
+    }
+
+    private fun approximateMockHttp(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "getHeader") {
+            return scope.calcOnState {
+                val headerNameArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
+                val headerName = memory.tryHeapRefToObject(headerNameArgument) as String?
+
+                if (headerName == null) {
+                    logger.warn("Non-concrete header names are not supported")
+                    return@calcOnState false
+                }
+
+                return@calcOnState skipWithValueFromScope(methodCall, "HEADER_${headerName}")
+            }
+        }
+        return false
+    }
+
+
+    private fun approximateArgumentResolver(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "resolveArgument") {
+            return scope.calcOnState {
+                val headerNameArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
+                val headerName = memory.tryHeapRefToObject(headerNameArgument) as String?
+
+                if (headerName == null) {
+                    logger.warn("Non-concrete header names are not supported")
+                    return@calcOnState false
+                }
+
+                return@calcOnState skipWithValueFromScope(methodCall, "ARGUMENT_${headerName}")
+            }
+        }
+        return false
+    }
+
+    private fun approximateStringMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "equals") {
+            return scope.calcOnState {
+                val first = arguments[0].asExpr(ctx.addressSort)
+                val second = arguments[1].asExpr(ctx.addressSort)
+                val result = stringEquals(first, second)
+                skipMethodInvocationWithValue(methodCall, result)
+                return@calcOnState true
+            }
+        }
+        return false
     }
 
     private fun approximateSpringBootMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
