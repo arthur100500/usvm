@@ -67,7 +67,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 
 private fun loadWebPetClinicBench(): BenchCp {
-    val petClinicDir = Path("/Users/michael/Documents/Work/spring-petclinic/build/libs/BOOT-INF")
+    val petClinicDir = Path("C:/Users/arthur/Documents/spring-petclinic/build/libs/BOOT-INF")
     return loadWebAppBenchCp(petClinicDir / "classes", petClinicDir / "lib").apply {
         entrypointFilter = { it.enclosingClass.simpleName.startsWith("PetClinicApplication") }
     }
