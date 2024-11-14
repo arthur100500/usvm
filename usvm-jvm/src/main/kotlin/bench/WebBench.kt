@@ -221,7 +221,7 @@ private fun analyzeBench(benchmark: BenchCp) {
     val method = startClass.declaredMethods.find { it.name == "startSpring" }!!
     // using file instead of console
     val fileStream = PrintStream(System.getenv("USVM_LOG_PATH"))
-    System.setOut(fileStream) 
+    System.setOut(fileStream)
     JcMachine(cp, options, jcMachineOptions).use { machine ->
         val states = machine.analyze(method.method)
         states.map { testResolver.resolve(method, it) }
