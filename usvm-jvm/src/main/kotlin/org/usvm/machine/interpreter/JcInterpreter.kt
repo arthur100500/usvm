@@ -174,6 +174,8 @@ class JcInterpreter(
             return scope.stepResult()
         }
 
+        logger.info(stmt.method.enclosingClass.name + "#" + stmt.method.name + " " + stmt.toString())
+
         when (stmt) {
             is JcMethodCallBaseInst -> visitMethodCall(scope, stmt)
             is JcAssignInst -> visitAssignInst(scope, stmt)

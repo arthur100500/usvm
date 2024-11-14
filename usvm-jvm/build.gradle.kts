@@ -248,7 +248,7 @@ tasks.register<JavaExec>("runWebBench") {
 
     jvmArgs = listOf("-Xmx15g") + mutableListOf<String>().apply {
         add("-Djava.security.manager -Djava.security.policy=webExplorationPolicy.policy")
-        add("-Djdk.internal.lambda.dumpProxyClasses=/Users/michael/Documents/Work/spring-petclinic/build/libs/BOOT-INF/classes/")
+        add("-Djdk.internal.lambda.dumpProxyClasses=C:/Users/arthur/Documents/spring-petclinic/build/libs/BOOT-INF/classes/")
         openPackage("java.base", "jdk.internal.misc")
         openPackage("java.base", "java.lang")
         openPackage("java.base", "java.lang.reflect")
