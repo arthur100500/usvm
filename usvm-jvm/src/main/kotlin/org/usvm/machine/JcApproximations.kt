@@ -100,6 +100,7 @@ import kotlin.reflect.KFunction1
 import kotlin.reflect.KFunction2
 import org.usvm.api.makeNullableSymbolicRefWithSameType
 import org.usvm.api.makeNullableSymbolicRef
+import org.usvm.api.makeNullableSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
 import org.usvm.api.mapTypeStreamNotNull
 import org.usvm.api.readArrayIndex
@@ -815,6 +816,26 @@ class JcMethodApproximationResolver(
         }
         return false
     }
+
+    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String) : Boolean {
+        return scope.calcOnState {
+            var storedHeader = getUserDefinedValue(userValueKey)
+
+            if (storedHeader == null) {
+                val newSymbolicHeader = scope.makeNullableSymbolicRef(ctx.stringType)?.asExpr(ctx.addressSort)
+                if (newSymbolicHeader == null) {
+                    logger.warn("Unable to create symbolic value for header")
+                    return@calcOnState false
+                }
+                userDefinedValues += Pair(userValueKey, newSymbolicHeader)
+                storedHeader = newSymbolicHeader
+            }
+
+            skipMethodInvocationWithValue(methodCall, storedHeader)
+            return@calcOnState true
+        }
+    }
+
 
     private fun approximateSpringBootMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
         val methodName = method.name
