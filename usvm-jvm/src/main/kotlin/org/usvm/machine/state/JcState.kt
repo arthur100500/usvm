@@ -67,6 +67,8 @@ class JcState(
             targets.clone(),
             userDefinedValues
         )
+        println("\u001B[34m" + "[$id] -> [$id, ${newState.id}]" + "\u001B[0m")
+        return newState
     }
 
     /**
