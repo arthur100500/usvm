@@ -45,7 +45,7 @@ class JcState(
         val method = callStack.lastMethod()
         println("\u001B[34m" + "Forked on method ${method}" + "\u001B[0m")
         val clonedConstraints = newConstraints ?: pathConstraints.clone()
-        return JcState(
+        val newState = JcState(
             ctx,
             entrypoint,
             callStack.clone(),
@@ -58,6 +58,8 @@ class JcState(
             targets.clone(),
             userDefinedValues
         )
+        println("\u001B[34m" + "[$id] -> [$id, ${newState.id}]" + "\u001B[0m")
+        return newState
     }
 
     /**
