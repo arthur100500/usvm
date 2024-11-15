@@ -175,7 +175,9 @@ class JcInterpreter(
             return scope.stepResult()
         }
 
-        logger.info(stmt.method.enclosingClass.name + "#" + stmt.method.name + " " + stmt.toString())
+        val formattedStateId = state.id.toString()
+        val methodNameWithClass = stmt.method.enclosingClass.name.split(".").last() + "#" + stmt.method.name + " " + stmt.toString()
+        logger.info("[$formattedStateId] $methodNameWithClass")
 
         when (stmt) {
             is JcMethodCallBaseInst -> visitMethodCall(scope, stmt)
