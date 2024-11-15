@@ -600,7 +600,7 @@ class JcMethodApproximationResolver(
                 .mapNotNull { ctx.cp.findClassOrNull(it) }
                 .filterNot { it is JcUnknownClass }
                 // TODO: filter deps classes #Spring use JcMachineOptions.projectLocations
-                .filter { it.declaration.location.path.equals("C:\\Users\\arthur\\Documents\\spring-petclinic\\build\\libs\\BOOT-INF\\classes") }
+                .filter { it.declaration.location.path.equals(System.getenv("USVM_PETCLINIC_BOOT_INF") + "\\classes") }
                 .filter {
                     !it.isAbstract && !it.isInterface && !it.isAnonymous && it.annotations.any {
                         it.name == "org.springframework.stereotype.Controller"

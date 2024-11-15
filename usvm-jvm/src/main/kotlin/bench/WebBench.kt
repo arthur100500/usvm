@@ -49,7 +49,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
 private fun loadWebPetClinicBench(): BenchCp {
-    val petClinicDir = Path("C:/Users/arthur/Documents/spring-petclinic/build/libs/BOOT-INF")
+    val petClinicDir = Path(System.getenv("USVM_PETCLINIC_BOOT_INF"))
     return loadWebAppBenchCp(petClinicDir / "classes", petClinicDir / "lib").apply {
         entrypointFilter = { it.enclosingClass.simpleName.startsWith("PetClinicApplication") }
     }
@@ -220,8 +220,8 @@ private fun analyzeBench(benchmark: BenchCp) {
     val startClass = publicClasses.find { it.simpleName == "NewStartSpring" }!!.toType()
     val method = startClass.declaredMethods.find { it.name == "startSpring" }!!
     // using file instead of console
-    val fileStream = PrintStream("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\USVM_Log.ansi")
-    System.setOut(fileStream)
+    val fileStream = PrintStream(System.getenv("USVM_LOG_PATH"))
+    System.setOut(fileStream) 
     JcMachine(cp, options, jcMachineOptions).use { machine ->
         val states = machine.analyze(method.method)
         states.map { testResolver.resolve(method, it) }
