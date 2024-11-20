@@ -1,5 +1,6 @@
 package org.usvm.machine
 
+import io.ksmt.expr.KBitVec32Value
 import io.ksmt.utils.asExpr
 import io.ksmt.utils.uncheckedCast
 import org.jacodb.api.jvm.JcAnnotation
@@ -114,6 +115,7 @@ import org.usvm.machine.state.concreteMemory.javaName
 import org.usvm.machine.state.newStmt
 import org.usvm.mkSizeAddExpr
 import org.usvm.mkSizeExpr
+import org.usvm.types.single
 import java.util.ArrayList
 import java.util.TreeMap
 
@@ -122,6 +124,15 @@ class JcMethodApproximationResolver(
     private val applicationGraph: JcApplicationGraph,
     private val options: JcMachineOptions,
 ) {
+    companion object  {
+        val PATH_ARGUMENT_REGEX by lazy {
+            "\\{[^/]*}".toRegex()
+        }
+        val ARGUMENT_RESOLVER_REGEX by lazy {
+            "org\\.springframework\\.web\\.[a-z.]*\\.annotation.*ArgumentResolver(Composite)?".toRegex()
+        }
+    }
+
     private var currentScope: JcStepScope? = null
     private val scope: JcStepScope
         get() = checkNotNull(currentScope)
@@ -212,7 +223,8 @@ class JcMethodApproximationResolver(
             if (approximateMockHttp(methodCall)) return true
         }
 
-        if ("org\\.springframework\\.web\\.method\\.annotation\\.*ArgumentResolver".toRegex().matches(className)) {
+        // TODO: Replace regex with something more efficient
+        if (ARGUMENT_RESOLVER_REGEX.matches(className)) {
             if (approximateArgumentResolver(methodCall)) return true
         }
 
@@ -680,6 +692,30 @@ class JcMethodApproximationResolver(
                         val path = if (basePath != null) combinePaths(basePath, localPath) else localPath
                         if (shouldSkipPath(path, kind, controllerType.name))
                             continue
+//                        var startIndex = 0
+//                        var found: Boolean
+//                        val types = mutableListOf<Class<*>>()
+//                        val parameters = method.parameters
+//                        do {
+//                            val currentStartIndex = path.indexOf('{', startIndex)
+//                            found = currentStartIndex != -1
+//                            if (found) {
+//                                startIndex = currentStartIndex + 1
+//                                val currentEndIndex = path.indexOf('}', startIndex)
+//                                check(currentEndIndex != -1)
+//                                val varName = path.substring(startIndex, currentEndIndex)
+//                                for (p in parameters) {
+//                                    val pathVarAnnotation = p.annotations.find {
+//                                        it.name == "org.springframework.web.bind.annotation.PathVariable"
+//                                    }
+//                                    if (pathVarAnnotation != null && pathVarNameFromAnnotation(pathVarAnnotation) == varName) {
+//                                        val type = ctx.cp.findType(p.type.typeName).toJavaClass(JcConcreteMemoryClassLoader)
+//                                        types.add(type)
+//                                    }
+//                                }
+//                            }
+//                        } while (found)
+//                        val properties = listOf(kind, types)
                         val pathArgsCount = path.filter { it == '{' }.length
                         val properties = ArrayList(listOf(kind, Integer.valueOf(pathArgsCount)))
                         paths[path] = properties
@@ -690,24 +726,25 @@ class JcMethodApproximationResolver(
                 result[controllerType.name] = paths
         }
 
-        return result
+        // TODO: Remove filter for all controller research
+        return result.filter { it.key.contains("VisitController") }
     }
 
-    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String) : Boolean {
+    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, type: JcType) : Boolean {
         return scope.calcOnState {
-            var storedHeader = getUserDefinedValue(userValueKey)
+            var storedValue = getUserDefinedValue(userValueKey)
 
-            if (storedHeader == null) {
-                val newSymbolicHeader = scope.makeNullableSymbolicRef(ctx.stringType)?.asExpr(ctx.addressSort)
+            if (storedValue == null) {
+                val newSymbolicHeader = scope.makeNullableSymbolicRef(type)?.asExpr(ctx.addressSort)
                 if (newSymbolicHeader == null) {
-                    logger.warn("Unable to create symbolic value for header")
+                    logger.warn("Unable to create symbolic ref for given type")
                     return@calcOnState false
                 }
                 userDefinedValues += Pair(userValueKey, newSymbolicHeader)
-                storedHeader = newSymbolicHeader
+                storedValue = newSymbolicHeader
             }
 
-            skipMethodInvocationWithValue(methodCall, storedHeader)
+            skipMethodInvocationWithValue(methodCall, storedValue)
             return@calcOnState true
         }
     }
@@ -723,7 +760,7 @@ class JcMethodApproximationResolver(
                     return@calcOnState false
                 }
 
-                return@calcOnState skipWithValueFromScope(methodCall, "HEADER_${headerName}")
+                return@calcOnState skipWithValueFromScope(methodCall, "HEADER_${headerName}", ctx.stringType)
             }
         }
         return false
@@ -731,17 +768,34 @@ class JcMethodApproximationResolver(
 
 
     private fun approximateArgumentResolver(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        // TODO: Process where field origin (e.g. Path Query Body) to determine it's position
         if (method.name == "resolveArgument") {
             return scope.calcOnState {
-                val headerNameArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
-                val headerName = memory.tryHeapRefToObject(headerNameArgument) as String?
+                val parameterRef = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
+                val annotatedMethodParameter = memory.tryHeapRefToObject(parameterRef)
 
-                if (headerName == null) {
-                    logger.warn("Non-concrete header names are not supported")
+                if (annotatedMethodParameter == null) {
+                    logger.warn("Non-concrete parameter indices are not supported")
                     return@calcOnState false
                 }
 
-                return@calcOnState skipWithValueFromScope(methodCall, "ARGUMENT_${headerName}")
+                val annotatedMethodParameterType = memory.types.getTypeStream(parameterRef).single() as JcClassType
+                val parameterIndexField = annotatedMethodParameterType.allInstanceFields.single {it.name == "parameterIndex"}
+                val parameterTypeField = annotatedMethodParameterType.allInstanceFields.single {it.name == "parameterType"}
+                val parameterIndex = memory.readField(parameterRef, parameterIndexField.field, ctx.integerSort) as KBitVec32Value
+                val parameterTypeRef = memory.readField(parameterRef, parameterTypeField.field, ctx.addressSort) as UConcreteHeapRef
+                val typeType = memory.types.getTypeStream(parameterTypeRef).single() as JcClassType
+                val typeNameField = typeType.allInstanceFields.single {it.name == "name"}
+                val typeNameRef = memory.readField(parameterTypeRef, typeNameField.field, ctx.addressSort) as UConcreteHeapRef
+                val typeName = memory.tryHeapRefToObject(typeNameRef) as String
+                val type = ctx.cp.findTypeOrNull(typeName)
+
+                if (type == null) {
+                    logger.warn("Non-concrete type is not supported for controller parameter")
+                    return@calcOnState false
+                }
+
+                return@calcOnState skipWithValueFromScope(methodCall, "ARGUMENT_${parameterIndex.numberValue}", type)
             }
         }
         return false
