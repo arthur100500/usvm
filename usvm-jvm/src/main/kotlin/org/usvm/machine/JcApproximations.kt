@@ -577,7 +577,7 @@ class JcMethodApproximationResolver(
 
     private fun pathFromAnnotation(annotation: JcAnnotation): String {
         val values = annotation.values
-        assert(values.size == 1)
+        assert(values.contains("value"))
         val value = values["value"] as ArrayList<*>
         return value[0] as String
     }
@@ -587,11 +587,13 @@ class JcMethodApproximationResolver(
         return PATH_ARGUMENT_REGEX.replace(path, "0")
     }
 
-    private fun pathVarNameFromAnnotation(annotation: JcAnnotation): String {
-        val values = annotation.values
-        assert(values.size == 1)
-        return values["value"] as String
+    private fun getRequestMappingMethod(annotation: JcAnnotation): String {
+        // TODO:
+        println(annotation.name)
+        println(annotation.values)
+        return "get"
     }
+
 
     private fun reqMappingPath(controllerType: JcClassOrInterface): String? {
         for (annotation in controllerType.annotations) {
@@ -619,9 +621,11 @@ class JcMethodApproximationResolver(
                 .filterNot { it is JcUnknownClass }
                 // TODO: filter deps classes #Spring use JcMachineOptions.projectLocations
                 .filter { it.declaration.location.path.equals(System.getenv("USVM_PETCLINIC_BOOT_INF") + "\\classes") }
+                // TODO: Resdearch other controller types, which are likely to be aliases for Controller
                 .filter {
                     !it.isAbstract && !it.isInterface && !it.isAnonymous && it.annotations.any {
-                        it.name == "org.springframework.stereotype.Controller"
+                        it.name == "org.springframework.stereotype.Controller" ||
+                        it.name == "org.springframework.web.bind.annotation.RestController"
                     }
                 }.toList()
         val result = TreeMap<String, Map<String, List<Any>>>()
@@ -633,6 +637,7 @@ class JcMethodApproximationResolver(
                 for (annotation in method.annotations) {
                     val kind =
                         when (annotation.name) {
+                            "org.springframework.web.bind.annotation.RequestMapping" -> getRequestMappingMethod(annotation)
                             "org.springframework.web.bind.annotation.GetMapping" -> "get"
                             "org.springframework.web.bind.annotation.PostMapping" -> "post"
                             "org.springframework.web.bind.annotation.PutMapping" -> "put"
@@ -682,7 +687,7 @@ class JcMethodApproximationResolver(
         }
 
         // TODO: Remove filter for all controller research
-        return result.filter { it.key.contains("VisitController") }
+        return result
     }
 
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, type: JcType) : Boolean {
