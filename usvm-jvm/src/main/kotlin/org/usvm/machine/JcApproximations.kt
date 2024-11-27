@@ -733,7 +733,7 @@ class JcMethodApproximationResolver(
         }
 
         // TODO: Remove filter for all controller research
-        return result.filter { it.key.contains("VisitController") }
+        return result
     }
 
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, type: JcType) : Boolean {
