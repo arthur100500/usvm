@@ -111,6 +111,8 @@ import org.usvm.api.util.Reflection.toJavaClass
 import org.usvm.api.writeField
 import org.usvm.getIntValue
 import org.usvm.instrumentation.util.toJavaClass
+import org.usvm.instrumentation.util.stringType
+import org.usvm.machine.state.concreteMemory.JcConcreteMemory
 import org.usvm.machine.state.concreteMemory.allInstanceFields
 import org.usvm.machine.state.concreteMemory.classesOfLocations
 import org.usvm.machine.state.concreteMemory.isSpringController
@@ -771,36 +773,101 @@ class JcMethodApproximationResolver(
 
 
     private fun approximateArgumentResolver(methodCall: JcMethodCall): Boolean = with(methodCall) {
-        // TODO: Process where field origin (e.g. Path Query Body) to determine it's position
-        if (method.name == "resolveArgument") {
+        val stringType = ctx.cp.stringType()
+
+         /* AbstractNamedValueMethodArgumentResolver
+          * TODO: Support String[] (>1) for resolved arguments
+          * - [x] ServletCookieValueMethodArgumentResolver @CookieValue
+          * - [x] MatrixVariableMethodArgumentResolver @MatrixVariable
+          * - [x] PathVariableMethodArgumentResolver @PathVariable
+          * - [ ] TODO: RequestAttributeMethodArgumentResolver @RequestAttribute
+          *         Uses request.getAttribute(name, RequestAttributes.SCOPE_REQUEST);
+          * - [x] RequestHeaderMethodArgumentResolver @RequestHeader
+          * - [x] RequestParamMethodArgumentResolver @RequestParam
+          * - [ ] TODO: SessionAttributeMethodArgumentResolver @SessionAttribute
+          * Uses resolveName(...) to resolve a single argument by name
+          */
+        if (method.name == "resolveName") {
             return scope.calcOnState {
-                val parameterRef = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
-                val annotatedMethodParameter = memory.tryHeapRefToObject(parameterRef)
+                val nameRef = arguments[0].asExpr(ctx.addressSort) as UConcreteHeapRef
+                val name = memory.tryHeapRefToObject(nameRef) as String
 
-                if (annotatedMethodParameter == null) {
-                    logger.warn("Non-concrete parameter indices are not supported")
-                    return@calcOnState false
+                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.ServletCookieValueMethodArgumentResolver")) {
+                    val type = ctx.cp.findType("jakarta.servlet.http.Cookie")
+                    val key = "COOKIE_${name}"
+                    return@calcOnState skipWithValueFromScope(methodCall, key, type)
                 }
 
-                val annotatedMethodParameterType = memory.types.getTypeStream(parameterRef).single() as JcClassType
-                val parameterIndexField = annotatedMethodParameterType.allInstanceFields.single {it.name == "parameterIndex"}
-                val parameterTypeField = annotatedMethodParameterType.allInstanceFields.single {it.name == "parameterType"}
-                val parameterIndex = memory.readField(parameterRef, parameterIndexField.field, ctx.integerSort) as KBitVec32Value
-                val parameterTypeRef = memory.readField(parameterRef, parameterTypeField.field, ctx.addressSort) as UConcreteHeapRef
-                val typeType = memory.types.getTypeStream(parameterTypeRef).single() as JcClassType
-                val typeNameField = typeType.allInstanceFields.single {it.name == "name"}
-                val typeNameRef = memory.readField(parameterTypeRef, typeNameField.field, ctx.addressSort) as UConcreteHeapRef
-                val typeName = memory.tryHeapRefToObject(typeNameRef) as String
-                val type = ctx.cp.findTypeOrNull(typeName)
-
-                if (type == null) {
-                    logger.warn("Non-concrete type is not supported for controller parameter")
-                    return@calcOnState false
+                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.MatrixVariableMethodArgumentResolver")) {
+                    val key = "MATRIX_${name}"
+                    return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
                 }
 
-                return@calcOnState skipWithValueFromScope(methodCall, "ARGUMENT_${parameterIndex.numberValue}", type)
+                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.PathVariableMethodArgumentResolver")) {
+                    val key = "PATH_${name}"
+                    return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
+                }
+
+                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.RequestHeaderMethodArgumentResolver")) {
+                    val key = "HEADER_${name}"
+                    return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
+                }
+
+                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.RequestHeaderMethodArgumentResolver")) {
+                    val key = "PARAM_${name}"
+                    return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
+                }
+
+                return@calcOnState false
             }
         }
+
+         /* Resolves argument to a special symbolic map
+          * - [ ] RequestHeaderMapMethodArgumentResolver
+          * - [ ] RequestParamMapMethodArgumentResolver
+          * - [ ] PathVariableMapMethodArgumentResolver
+          * - [ ] MatrixVariableMapMethodArgumentResolver
+          */
+        if (method.name == "resolveArgument") {
+            return scope.calcOnState {
+                return@calcOnState false
+            }
+        }
+
+
+        /* Resolves argument for different miscellaneous values
+         * - [x] ServletWebArgumentResolverAdapter
+         *       - Just an adapter
+         * - [x] ContinuationHandlerMethodArgumentResolver
+         *       - Always returns null
+         * - [x] ErrorsMethodArgumentResolver
+         *       - Can be executed symbolically
+         * - [ ] TODO: HttpEntityMethodProcessor
+         * - [x] MapMethodProcessor
+         *       - Can be executed symbolically
+         * - [ ] TODO: ModelAttributeMethodProcessor
+         * - [x] ModelMethodProcessor
+         *       - Can be executed symbolically
+         * - [ ] TODO: OffsetScrollPositionHandlerMethodArgumentResolver
+         * - [ ] TODO: PageableArgumentResolver
+         * - [x] PagedResourcesAssemblerArgumentResolver
+         *       - Can be executed symbolically
+         * - [ ] TODO: PrincipalMethodArgumentResolver
+         * - [ ] TODO: QuerydslPredicateArgumentResolver
+         * - [ ] TODO: RedirectAttributesMethodArgumentResolver
+         * - [ ] TODO: RequestPartMethodArgumentResolver
+         * - [ ] TODO: RequestResponseBodyMethodProcessor
+         *        - Look at return value processing
+         *        - Look at HTTP message codecs
+         * - [ ] TODO: ServletRequestMethodArgumentResolver
+         * - [ ] TODO: ServletResponseMethodArgumentResolver
+         * - [x] TODO: SessionStatusMethodArgumentResolver
+         *       - Can be executed symbolically
+         * - [ ] TODO: SlicedResourcesAssemblerArgumentResolver
+         * - [ ] TODO: SortHandlerMethodArgumentResolver
+         * - [ ] TODO: UriComponentsBuilderMethodArgumentResolver
+         */
+
         return false
     }
 
