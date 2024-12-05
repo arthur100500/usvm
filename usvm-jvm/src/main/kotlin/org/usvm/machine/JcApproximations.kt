@@ -725,7 +725,7 @@ class JcMethodApproximationResolver(
 //                        val properties = listOf(kind, types)
                         val pathArgsCount = path.filter { it == '{' }.length
                         val properties = listOf(kind, Integer.valueOf(pathArgsCount))
-                        paths[pathWithValues] = properties
+                        paths[path] = properties
                     }
                 }
             }
@@ -791,31 +791,31 @@ class JcMethodApproximationResolver(
           */
         if (method.name == "resolveName") {
             return scope.calcOnState {
-                val nameRef = arguments[0].asExpr(ctx.addressSort) as UConcreteHeapRef
+                val nameRef = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
                 val name = memory.tryHeapRefToObject(nameRef) as String
 
-                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.ServletCookieValueMethodArgumentResolver")) {
+                if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.ServletCookieValueMethodArgumentResolver")) {
                     val type = ctx.cp.findType("jakarta.servlet.http.Cookie")
                     val key = "COOKIE_${name}"
                     return@calcOnState skipWithValueFromScope(methodCall, key, type)
                 }
 
-                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.MatrixVariableMethodArgumentResolver")) {
+                if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.MatrixVariableMethodArgumentResolver")) {
                     val key = "MATRIX_${name}"
                     return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
                 }
 
-                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.PathVariableMethodArgumentResolver")) {
+                if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.PathVariableMethodArgumentResolver")) {
                     val key = "PATH_${name}"
                     return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
                 }
 
-                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.RequestHeaderMethodArgumentResolver")) {
+                if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver")) {
                     val key = "HEADER_${name}"
                     return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
                 }
 
-                if (method.enclosingClass.name.contains("org.springframework.web.servlet.mvc.method.annotation.RequestHeaderMethodArgumentResolver")) {
+                if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.RequestParamMethodArgumentResolver")) {
                     val key = "PARAM_${name}"
                     return@calcOnState skipWithValueFromScope(methodCall, key, stringType)
                 }
