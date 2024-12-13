@@ -849,6 +849,10 @@ class JcConcreteMemory private constructor(
             "org.springframework.web.method.support.InvocableHandlerMethod#doInvoke(java.lang.Object[]):java.lang.Object",
             "java.lang.reflect.Method#invoke(java.lang.Object,java.lang.Object[]):java.lang.Object",
 
+            "org.springframework.mock.web.MockHttpServletRequest#getParameterMap():java.util.Map",
+            "org.springframework.mock.web.MockHttpServletRequest#_getHeaderMap():java.util.Map",
+            "org.springframework.mock.web.MockHttpServletRequest#_getMatrixMap():java.util.Map",
+
             "org.springframework.web.servlet.mvc.method.annotation.ServletModelAttributeMethodProcessor#bindRequestParameters(org.springframework.web.bind.WebDataBinder,org.springframework.web.context.request.NativeWebRequest):void",
             "org.springframework.web.bind.ServletRequestDataBinder#bind(jakarta.servlet.ServletRequest):void",
             "org.springframework.web.bind.WebDataBinder#doBind(org.springframework.beans.MutablePropertyValues):void",
