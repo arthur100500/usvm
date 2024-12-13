@@ -342,6 +342,11 @@ class JcConcreteMemory private constructor(
                 || !(method is JcEnrichedVirtualMethod && method.enclosingClass.staticFields.any { it.toJavaField == null })
     }
 
+    public fun concretize() {
+//        val concretizer = JcConcretizer(state)
+
+    }
+
     private inner class JcConcretizer(
         state: JcState
     ) : JcTestStateResolver<Any?>(state.ctx, state.models.first(), state.memory, state.callStack.lastMethod().enclosingClass.toType().declaredMethods.first()) {
@@ -824,6 +829,10 @@ class JcConcreteMemory private constructor(
             "org.springframework.web.method.annotation.ModelAttributeMethodProcessor#resolveArgument(org.springframework.core.MethodParameter,org.springframework.web.method.support.ModelAndViewContainer,org.springframework.web.context.request.NativeWebRequest,org.springframework.web.bind.support.WebDataBinderFactory):java.lang.Object",
             "org.springframework.web.method.support.InvocableHandlerMethod#doInvoke(java.lang.Object[]):java.lang.Object",
             "java.lang.reflect.Method#invoke(java.lang.Object,java.lang.Object[]):java.lang.Object",
+
+            "org.springframework.mock.web.MockHttpServletRequest#getParameterMap():java.util.Map",
+            "org.springframework.mock.web.MockHttpServletRequest#_getHeaderMap():java.util.Map",
+            "org.springframework.mock.web.MockHttpServletRequest#_getMatrixMap():java.util.Map",
 
             "org.springframework.web.servlet.mvc.method.annotation.ServletModelAttributeMethodProcessor#bindRequestParameters(org.springframework.web.bind.WebDataBinder,org.springframework.web.context.request.NativeWebRequest):void",
             "org.springframework.web.bind.ServletRequestDataBinder#bind(jakarta.servlet.ServletRequest):void",
