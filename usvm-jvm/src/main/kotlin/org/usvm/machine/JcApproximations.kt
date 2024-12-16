@@ -187,10 +187,6 @@ class JcMethodApproximationResolver(
             if (approximateSpringRepositoryMethod(methodCall)) return true
         }
 
-        if (className.contains("org.springframework.mock.web.MockHttpServletRequest")) {
-            if (approximateMockHttp(methodCall)) return true
-        }
-
         // TODO: Replace regex with something more efficient
         if (ARGUMENT_RESOLVER_REGEX.matches(className)) {
             if (approximateArgumentResolver(methodCall)) return true
@@ -595,7 +591,7 @@ class JcMethodApproximationResolver(
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String): Boolean {
         // Replace controller method here
-        return !path.contains("/complex/parameter_map")
+        return !path.contains("/simple/increment_from_header")
     }
 
     private fun allControllerPaths(): Map<String, Map<String, List<Any>>> {
@@ -679,38 +675,22 @@ class JcMethodApproximationResolver(
 
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, type: JcType) : Boolean {
         return scope.calcOnState {
-            var storedValue = getUserDefinedValue(userValueKey)
+            val userValueKeyUpper = userValueKey.uppercase()
+            var storedValue = getUserDefinedValue(userValueKeyUpper)
 
             if (storedValue == null) {
-                val newSymbolicHeader = scope.makeNullableSymbolicRef(type)?.asExpr(ctx.addressSort)
-                if (newSymbolicHeader == null) {
+                val newValue = scope.makeNullableSymbolicRef(type)?.asExpr(ctx.addressSort)
+                if (newValue == null) {
                     logger.warn("Unable to create symbolic ref for given type")
                     return@calcOnState false
                 }
-                userDefinedValues += Pair(userValueKey, newSymbolicHeader)
-                storedValue = newSymbolicHeader
+                userDefinedValues += Pair(userValueKeyUpper, newValue)
+                storedValue = newValue
             }
 
             skipMethodInvocationWithValue(methodCall, storedValue)
             return@calcOnState true
         }
-    }
-
-    private fun approximateMockHttp(methodCall: JcMethodCall): Boolean = with(methodCall) {
-        if (method.name == "getHeader") {
-            return scope.calcOnState {
-                val headerNameArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
-                val headerName = memory.tryHeapRefToObject(headerNameArgument) as String?
-
-                if (headerName == null) {
-                    logger.warn("Non-concrete header names are not supported")
-                    return@calcOnState false
-                }
-
-                return@calcOnState skipWithValueFromScope(methodCall, "HEADER_${headerName}", ctx.stringType)
-            }
-        }
-        return false
     }
 
     private fun getTypeFromParameter(parameter: UHeapRef) : JcType? = scope.calcOnState {
