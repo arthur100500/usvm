@@ -348,9 +348,11 @@ class JcConcreteMemory private constructor(
                 && method is JcEnrichedVirtualMethod && method.enclosingClass.toType().isStaticApproximation
     }
 
-    public fun concretize() {
-//        val concretizer = JcConcretizer(state)
-
+    public fun concretize(state: JcState, ref: UConcreteHeapRef, heapRef: UHeapRef, type: JcClassType): Any? {
+        val concretizer = JcConcretizer(state)
+        return concretizer.withMode(ResolveMode.MODEL){
+            return@withMode concretizer.resolveObject(ref, heapRef, type);
+        }
     }
 
     private inner class JcConcretizer(
@@ -381,6 +383,7 @@ class JcConcreteMemory private constructor(
             val elementType = type.elementType
             val elementSort = ctx.typeToSort(type.elementType)
             val arrayDescriptor = ctx.arrayDescriptorOf(type)
+            saveResolvedRef(ref.address, obj)
             for (kind in bindings.symbolicMembers(address)) {
                 check(kind is ArrayIndexChildKind)
                 val index = kind.index
@@ -854,6 +857,8 @@ class JcConcreteMemory private constructor(
             "org.springframework.mock.web.MockHttpServletRequest#getParameterMap():java.util.Map",
             "org.springframework.mock.web.MockHttpServletRequest#_getHeaderMap():java.util.Map",
             "org.springframework.mock.web.MockHttpServletRequest#_getMatrixMap():java.util.Map",
+            "org.springframework.mock.web.MockHttpServletRequest#getHeader(java.lang.String):java.lang.String",
+            "org.springframework.mock.web.MockHttpServletRequest#getParameter(java.lang.String):java.lang.String",
 
             "org.springframework.web.servlet.mvc.method.annotation.ServletModelAttributeMethodProcessor#bindRequestParameters(org.springframework.web.bind.WebDataBinder,org.springframework.web.context.request.NativeWebRequest):void",
             "org.springframework.web.bind.ServletRequestDataBinder#bind(jakarta.servlet.ServletRequest):void",
