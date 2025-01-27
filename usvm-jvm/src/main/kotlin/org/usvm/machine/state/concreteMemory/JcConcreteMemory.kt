@@ -312,7 +312,8 @@ class JcConcreteMemory private constructor(
     private fun shouldNotInvoke(method: JcMethod): Boolean {
         return forbiddenInvocations.contains(method.humanReadableSignature) ||
                 method.enclosingClass.isSpringFilter && (method.name == "doFilter" || method.name == "doFilterInternal") ||
-                method.enclosingClass.isSpringFilterChain && (method.name == "doFilter" || method.name == "doFilterInternal")
+                method.enclosingClass.isSpringFilterChain && (method.name == "doFilter" || method.name == "doFilterInternal") ||
+                method.enclosingClass.isArgumentResolver(ctx) && (method.name == "resolveArgument" || method.name == "readWithMessageConverters" || method.name == "resolveName")
     }
 
     private fun methodIsInvokable(method: JcMethod): Boolean {
@@ -877,6 +878,14 @@ class JcConcreteMemory private constructor(
             "org.springframework.security.web.FilterChainProxy#doFilterInternal(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse,jakarta.servlet.FilterChain):void",
             "org.springframework.security.web.session.DisableEncodeUrlFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
             "org.springframework.security.web.header.HeaderWriterFilter#doHeadersAfter(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
+            "org.springframework.http.HttpHeaders#getContentType():org.springframework.http.MediaType",
+
+            // TODO: Temporary, to check JSON object creation issues
+            "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#read(java.lang.reflect.Type,java.lang.Class,org.springframework.http.HttpInputMessage):java.lang.Object",
+            "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#readJavaType(com.fasterxml.jackson.databind.JavaType,org.springframework.http.HttpInputMessage):java.lang.Object",
+            "com.fasterxml.jackson.databind.ObjectReader#readValue(java.io.InputStream):java.lang.Object",
+            "com.fasterxml.jackson.databind.ObjectReader#_bindAndClose(com.fasterxml.jackson.core.JsonParser):java.lang.Object",
+            "com.fasterxml.jackson.databind.deser.DefaultDeserializationContext#readRootValue(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.JavaType,com.fasterxml.jackson.databind.JsonDeserializer,java.lang.Object):java.lang.Object"
         )
 
         private val concretizeInvocations = setOf(
