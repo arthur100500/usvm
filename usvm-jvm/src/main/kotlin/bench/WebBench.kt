@@ -96,7 +96,7 @@ private fun loadKlawBench(): BenchCp {
 
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadKlawBench()
+        loadWebPetClinicBench()
     }
 
     logTime("Analysis ALL") {

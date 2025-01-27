@@ -323,6 +323,7 @@ tasks.register<JavaExec>("runWebBench") {
         openPackage("java.base", "java.lang.annotation")
         openPackage("java.base", "java.lang.runtime")
         openPackage("java.base", "javax.crypto")
+        openPackage("java.xml", "com.sun.org.apache.xalan.internal.xsltc.trax")
         exportPackage("java.base", "sun.util.locale")
         exportPackage("java.base", "jdk.internal.misc")
         exportPackage("java.base", "jdk.internal.reflect")
