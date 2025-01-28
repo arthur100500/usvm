@@ -866,7 +866,10 @@ class JcConcreteMemory private constructor(
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#readJavaType(com.fasterxml.jackson.databind.JavaType,org.springframework.http.HttpInputMessage):java.lang.Object",
             "com.fasterxml.jackson.databind.ObjectReader#readValue(java.io.InputStream):java.lang.Object",
             "com.fasterxml.jackson.databind.ObjectReader#_bindAndClose(com.fasterxml.jackson.core.JsonParser):java.lang.Object",
-            "com.fasterxml.jackson.databind.deser.DefaultDeserializationContext#readRootValue(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.JavaType,com.fasterxml.jackson.databind.JsonDeserializer,java.lang.Object):java.lang.Object"
+            "com.fasterxml.jackson.databind.deser.DefaultDeserializationContext#readRootValue(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.JavaType,com.fasterxml.jackson.databind.JsonDeserializer,java.lang.Object):java.lang.Object",
+            "com.fasterxml.jackson.databind.deser.BeanDeserializer#deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):java.lang.Object",
+            "com.fasterxml.jackson.databind.deser.BeanDeserializer#deserializeFromObject(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):java.lang.Object",
+            "com.fasterxml.jackson.databind.deser.impl.MethodProperty#deserializeAndSet(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext,java.lang.Object):void"
         )
 
         private val concretizeInvocations = setOf(
