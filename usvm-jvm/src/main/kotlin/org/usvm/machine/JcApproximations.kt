@@ -661,7 +661,8 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/body/body_with_validation"
+        // return path != "/body/body_with_validation"
+        return path != "/owners"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
