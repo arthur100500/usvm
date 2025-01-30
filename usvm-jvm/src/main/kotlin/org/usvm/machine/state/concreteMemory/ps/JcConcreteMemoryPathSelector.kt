@@ -51,7 +51,13 @@ class JcConcreteMemoryPathSelector(
         if (state.callStack.isEmpty()) return
         val userDefinedValues = state.userDefinedValues
         userDefinedValues.forEach {
-            logger.info("\uD83E\uDD7A" + it.key + ": " + getConcreteValue(state, state.models[0].eval(it.value) as UConcreteHeapRef).toString())
+            val ref = state.models[0].eval(it.value)
+            var value = ref.toString()
+
+            if (ref is UConcreteHeapRef)
+                value = getConcreteValue(state, ref).toString()
+
+            logger.info("\uD83E\uDD7A ${it.key}: $value")
         }
     }
 

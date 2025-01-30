@@ -24,37 +24,9 @@ import org.jacodb.api.jvm.cfg.BsmStringArg
 import org.jacodb.api.jvm.cfg.BsmTypeArg
 import org.jacodb.api.jvm.cfg.JcFieldRef
 import org.jacodb.api.jvm.cfg.JcStringConstant
-import org.jacodb.api.jvm.ext.autoboxIfNeeded
-import org.jacodb.api.jvm.ext.boolean
-import org.jacodb.api.jvm.ext.byte
-import org.jacodb.api.jvm.ext.char
-import org.jacodb.api.jvm.ext.double
-import org.jacodb.api.jvm.ext.fields
-import org.jacodb.api.jvm.ext.findClassOrNull
-import org.jacodb.api.jvm.ext.findType
-import org.jacodb.api.jvm.ext.findTypeOrNull
-import org.jacodb.api.jvm.ext.float
-import org.jacodb.api.jvm.ext.ifArrayGetElementType
-import org.jacodb.api.jvm.ext.int
-import org.jacodb.api.jvm.ext.isAssignable
-import org.jacodb.api.jvm.ext.isEnum
-import org.jacodb.api.jvm.ext.isSubClassOf
-import org.jacodb.api.jvm.ext.long
-import org.jacodb.api.jvm.ext.objectClass
-import org.jacodb.api.jvm.ext.objectType
-import org.jacodb.api.jvm.ext.short
-import org.jacodb.api.jvm.ext.toType
-import org.jacodb.api.jvm.ext.void
+import org.jacodb.api.jvm.ext.*
 import org.jacodb.impl.cfg.util.isPrimitive
-import org.usvm.UBoolExpr
-import org.usvm.UBv32Sort
-import org.usvm.UBvSort
-import org.usvm.UConcreteHeapRef
-import org.usvm.UExpr
-import org.usvm.UFpSort
-import org.usvm.UHeapRef
-import org.usvm.UNullRef
-import org.usvm.USort
+import org.usvm.*
 import org.usvm.api.Engine
 import org.usvm.api.SymbolicIdentityMap
 import org.usvm.api.SymbolicList
@@ -91,7 +63,6 @@ import org.usvm.machine.interpreter.JcExprResolver
 import org.usvm.machine.interpreter.JcStepScope
 import org.usvm.machine.state.JcState
 import org.usvm.machine.state.skipMethodInvocationWithValue
-import org.usvm.sizeSort
 import org.usvm.types.first
 import org.usvm.types.singleOrNull
 import org.usvm.util.allocHeapRef
@@ -108,7 +79,6 @@ import org.usvm.api.readArrayLength
 import org.usvm.api.readField
 import org.usvm.api.util.JcConcreteMemoryClassLoader
 import org.usvm.api.writeField
-import org.usvm.getIntValue
 import org.usvm.instrumentation.util.toJavaClass
 import org.usvm.instrumentation.util.stringType
 import org.usvm.instrumentation.util.toJcType
@@ -118,8 +88,6 @@ import org.usvm.machine.state.concreteMemory.classesOfLocations
 import org.usvm.machine.state.concreteMemory.isSpringController
 import org.usvm.machine.state.concreteMemory.javaName
 import org.usvm.machine.state.newStmt
-import org.usvm.mkSizeAddExpr
-import org.usvm.mkSizeExpr
 import org.usvm.types.single
 import java.util.ArrayList
 import java.util.TreeMap
@@ -661,8 +629,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        // return path != "/body/body_with_validation"
-        return path != "/owners"
+        return path != "/body/graph"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
@@ -1032,25 +999,6 @@ class JcMethodApproximationResolver(
         return false
     }
 
-    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String) : Boolean {
-        return scope.calcOnState {
-            var storedHeader = getUserDefinedValue(userValueKey)
-
-            if (storedHeader == null) {
-                val newSymbolicHeader = scope.makeNullableSymbolicRef(ctx.stringType)?.asExpr(ctx.addressSort)
-                if (newSymbolicHeader == null) {
-                    logger.warn("Unable to create symbolic value for header")
-                    return@calcOnState false
-                }
-                userDefinedValues += Pair(userValueKey, newSymbolicHeader)
-                storedHeader = newSymbolicHeader
-            }
-
-            skipMethodInvocationWithValue(methodCall, storedHeader)
-            return@calcOnState true
-        }
-    }
-
 
     private fun approximateSpringBootMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
         val methodName = method.name
@@ -1280,7 +1228,17 @@ class JcMethodApproximationResolver(
                 val fields = declaringClass.declaredFields + declaringClass.fields
                 val jcField = fields.find { it.name == field.name } ?: return@calcOnState false
                 val sort = ctx.typeToSort(jcField.type)
-                memory.writeField(thisArg, jcField.field, sort, arguments[2].asExpr(ctx.addressSort), ctx.trueExpr)
+                val valueSource = arguments[2].asExpr(ctx.addressSort)
+                if (jcField.type is JcPrimitiveType) {
+                    val boxedType = jcField.type.autoboxIfNeeded() as JcClassType
+                    val valueField = boxedType.declaredFields.find { it.name == "value" } ?: return@calcOnState false
+                    val value = memory.readField(valueSource, valueField, sort)
+                    memory.writeField(thisArg, jcField.field, sort, value, ctx.trueExpr)
+                }
+                else {
+                    memory.writeField(thisArg, jcField.field, sort, arguments[2].asExpr(ctx.addressSort), ctx.trueExpr)
+                }
+
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
 
                 return@calcOnState true
