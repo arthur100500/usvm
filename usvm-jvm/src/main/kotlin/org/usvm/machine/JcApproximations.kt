@@ -852,7 +852,9 @@ class JcMethodApproximationResolver(
                 val userValueKeyUpper = "${prefix}_$key".uppercase()
                 userDefinedValues = userDefinedValues.filter { it.key != userValueKeyUpper }
                 userDefinedValues += Pair(userValueKeyUpper, value)
-                
+
+                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
+
                 return@calcOnState true
             }
         }
@@ -1218,7 +1220,7 @@ class JcMethodApproximationResolver(
                 if (jcField.type is JcPrimitiveType) {
                     val boxedType = jcField.type.autoboxIfNeeded() as JcClassType
                     val valueField = boxedType.declaredFields.find { it.name == "value" } ?: return@calcOnState false
-                    val value = memory.readField(valueSource, valueField, sort)
+                    val value = memory.readField(valueSource, valueField.field, sort)
                     memory.writeField(thisArg, jcField.field, sort, value, ctx.trueExpr)
                 }
                 else {
