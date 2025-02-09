@@ -35,6 +35,7 @@ import org.jacodb.api.jvm.ext.ifArrayGetElementType
 import org.jacodb.api.jvm.ext.isEnum
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.void
+import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod
 import org.usvm.ForkCase
 import org.usvm.StepResult
 import org.usvm.StepScope
@@ -90,6 +91,7 @@ import org.usvm.util.outerClassInstanceField
 import org.usvm.util.write
 import org.usvm.utils.logAssertFailure
 import org.usvm.utils.onStateDeath
+import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 typealias JcStepScope = StepScope<JcState, JcType, JcInst, JcContext>
 
@@ -158,8 +160,12 @@ class JcInterpreter(
         return state
     }
 
+    var step_number = 0
+
     override fun step(state: JcState): StepResult<JcState> {
         val stmt = state.lastStmt
+
+        step_number++
 
         logger.debug("Step: {}", stmt)
 
@@ -174,7 +180,7 @@ class JcInterpreter(
 
         val formattedStateId = state.id.toString()
         val methodNameWithClass = stmt.method.enclosingClass.name.split(".").last() + "#" + stmt.method.name + " " + stmt.toString()
-        logger.info("[$formattedStateId] $methodNameWithClass")
+        logger.info("$step_number [$formattedStateId] $methodNameWithClass")
 
         when (stmt) {
             is JcMethodCallBaseInst -> visitMethodCall(scope, stmt)
