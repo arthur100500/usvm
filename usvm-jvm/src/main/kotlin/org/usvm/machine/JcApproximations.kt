@@ -272,6 +272,10 @@ class JcMethodApproximationResolver(
             if (approximateSpringBootStaticMethod(methodCall)) return true
         }
 
+        if (className == "com.fasterxml.jackson.databind.deser.BeanDeserializer") {
+            if (approximateBeanDeserializerStatic(methodCall)) return true
+        }
+
         if (ARGUMENT_RESOLVER_REGEX.matches(className)) {
             if (approximateArgumentResolverStatic(methodCall)) return true
         }
@@ -989,6 +993,18 @@ class JcMethodApproximationResolver(
          * - [ ] TODO: UriComponentsBuilderMethodArgumentResolver
          */
 
+        return false
+    }
+
+    private fun approximateBeanDeserializerStatic(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "_concreteDeserialization") {
+            return scope.calcOnState {
+                // TODO: In any user code too
+                val concreteDeserializationMode = callStack.any { it.method.name == "readWithMessageConverters" && it.method.enclosingClass.name == "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor" }
+                skipMethodInvocationWithValue(methodCall, ctx.mkBool(!concreteDeserializationMode))
+                return@calcOnState true
+            }
+        }
         return false
     }
 

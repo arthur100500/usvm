@@ -52,9 +52,8 @@ class JcState(
             it.changeOwnership(cloneOwnership)
         } ?: pathConstraints.clone(newThisOwnership, cloneOwnership)
         this.ownership = newThisOwnership
-        println("\u001B[34m" + "Forked on method ${callStack.lastMethod()}" + "\u001B[0m")
-        println("\u001B[34mCallstack for fork $callStack\u001B[0m")
-        return JcState(
+
+        val new = JcState(
             ctx,
             cloneOwnership,
             entrypoint,
@@ -68,6 +67,12 @@ class JcState(
             targets.clone(),
             userDefinedValues
         )
+
+        println("\u001B[34m" + "[${this.id}] -> [${this.id}, ${new.id}]" + "\u001B[0m")
+        println("\u001B[34m" + "Forked on method ${callStack.lastMethod()}" + "\u001B[0m")
+        println("\u001B[34mCallstack for fork $callStack\u001B[0m")
+
+        return new
     }
 
     /**
