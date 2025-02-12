@@ -27,7 +27,7 @@ class JcState(
     forkPoints: PathNode<PathNode<JcInst>> = PathNode.root(),
     var methodResult: JcMethodResult = JcMethodResult.NoCall,
     targets: UTargetsSet<JcTarget, JcInst> = UTargetsSet.empty(),
-    var userDefinedValues: Map<String, UExpr<out USort>> = emptyMap()
+    var userDefinedValues: Map<String, Pair<UExpr<out USort>, JcType>> = emptyMap()
 ) : UState<JcType, JcMethod, JcInst, JcContext, JcTarget, JcState>(
     ctx,
     ownership,
@@ -40,7 +40,7 @@ class JcState(
     targets
 ) {
 
-    fun getUserDefinedValue(key: String): UExpr<out USort>? {
+    fun getUserDefinedValue(key: String): Pair<UExpr<out USort>, JcType>? {
         return userDefinedValues[key]
     }
 
