@@ -730,7 +730,7 @@ class JcMethodApproximationResolver(
         return scope.makeNullableSymbolicRef(type)?.asExpr(sort)
     }
     
-    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, newValue: UExpr<out USort>?) : Boolean {
+    private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, newValue: UExpr<out USort>?, newValueType: JcType) : Boolean {
         return scope.calcOnState {
             val userValueKeyUpper = userValueKey.uppercase()
             var storedValue = getUserDefinedValue(userValueKeyUpper)
@@ -740,11 +740,11 @@ class JcMethodApproximationResolver(
                     logger.warn("Unable to create symbolic ref for given type")
                     return@calcOnState false
                 }
-                userDefinedValues += Pair(userValueKeyUpper, newValue)
-                storedValue = newValue
+                userDefinedValues += Pair(userValueKeyUpper, Pair(newValue, newValueType))
+                storedValue = Pair(newValue, newValueType)
             }
 
-            skipMethodInvocationWithValue(methodCall, storedValue)
+            skipMethodInvocationWithValue(methodCall, storedValue.first)
             return@calcOnState true
         }
     }
@@ -792,7 +792,7 @@ class JcMethodApproximationResolver(
                     return@calcOnState false
                 }
 
-                userDefinedValues = userDefinedValues.filter { it.key != correctEntry!!.key } + Pair(correctEntry!!.key, newSymbolicValue)
+                userDefinedValues = userDefinedValues.filter { it.key != correctEntry!!.key } + Pair(correctEntry!!.key, Pair(newSymbolicValue, type))
 
                 skipMethodInvocationWithValue(methodCall, newSymbolicValue)
 
@@ -831,7 +831,7 @@ class JcMethodApproximationResolver(
                     return@calcOnState false
                 }
 
-                skipWithValueFromScope(methodCall, "${prefix}_$key", createNullableSymbolic(ctx.stringType, ctx.addressSort))
+                skipWithValueFromScope(methodCall, "${prefix}_$key", createNullableSymbolic(ctx.stringType, ctx.addressSort), ctx.stringType)
 
                 return@calcOnState true
             }
@@ -851,7 +851,7 @@ class JcMethodApproximationResolver(
 
                 val userValueKeyUpper = "${prefix}_$key".uppercase()
                 userDefinedValues = userDefinedValues.filter { it.key != userValueKeyUpper }
-                userDefinedValues += Pair(userValueKeyUpper, value)
+                userDefinedValues += Pair(userValueKeyUpper, Pair(value, ctx.cp.objectType))
 
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
 
@@ -873,7 +873,8 @@ class JcMethodApproximationResolver(
                     return@calcOnState false
                 }
 
-                skipWithValueFromScope(methodCall, key, createNullableSymbolic(ctx.cp.arrayTypeOf(ctx.stringType), ctx.addressSort))
+                val stringArrayType = ctx.cp.arrayTypeOf(ctx.stringType)
+                skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringArrayType, ctx.addressSort), stringArrayType)
 
                 return@calcOnState true
             }
@@ -885,7 +886,7 @@ class JcMethodApproximationResolver(
     private fun approximateMessageConverter(methodCall: JcMethodCall): Boolean = with(methodCall) {
         if (methodCall.method.name == "hasBody") {
             return scope.calcOnState {
-                return@calcOnState skipWithValueFromScope(methodCall, "HAS_BODY", makeSymbolicPrimitive(ctx.booleanSort)) 
+                return@calcOnState skipWithValueFromScope(methodCall, "HAS_BODY", makeSymbolicPrimitive(ctx.booleanSort), ctx.cp.boolean)
             }
         }
         return false
@@ -914,27 +915,27 @@ class JcMethodApproximationResolver(
                 if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.ServletCookieValueMethodArgumentResolver")) {
                     val cookieType = ctx.cp.findType("jakarta.servlet.http.Cookie")
                     val key = "COOKIE_${name}"
-                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(cookieType, ctx.addressSort))
+                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(cookieType, ctx.addressSort), cookieType)
                 }
 
                 if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.MatrixVariableMethodArgumentResolver")) {
                     val key = "MATRIX_${name}"
-                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort))
+                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort), stringType)
                 }
 
                 if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.PathVariableMethodArgumentResolver")) {
                     val key = "PATH_${name}"
-                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort))
+                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort), stringType)
                 }
 
                 if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver")) {
                     val key = "HEADER_${name}"
-                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort))
+                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort), stringType)
                 }
 
                 if (method.enclosingClass.name.contains("org.springframework.web.method.annotation.RequestParamMethodArgumentResolver")) {
                     val key = "PARAM_${name}"
-                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort))
+                    return@calcOnState skipWithValueFromScope(methodCall, key, createNullableSymbolic(stringType, ctx.addressSort), stringType)
                 }
 
                 return@calcOnState false

@@ -48,10 +48,10 @@ class JcConcreteMemoryPathSelector(
     }
 
     private fun printSpringTestSummary(state: JcState) {
-        if (state.callStack.isEmpty()) return
+        state.callStack.push(state.entrypoint, state.entrypoint.instList.get(0))
         val userDefinedValues = state.userDefinedValues
         userDefinedValues.forEach {
-            val ref = state.models[0].eval(it.value)
+            val ref = state.models[0].eval(it.value.first)
             var value = ref.toString()
 
             if (ref is UConcreteHeapRef)
