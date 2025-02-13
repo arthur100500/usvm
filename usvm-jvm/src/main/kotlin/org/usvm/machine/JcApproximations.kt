@@ -640,7 +640,7 @@ class JcMethodApproximationResolver(
         return controllerType.annotations.any {
             // TODO: support conditional controllers and dependend conditional beans
             it.name == "org.springframework.boot.autoconfigure.condition.ConditionalOnProperty"
-        }
+        }   
     }
 
     private fun getRequestMappingMethod(annotation: JcAnnotation): String {
