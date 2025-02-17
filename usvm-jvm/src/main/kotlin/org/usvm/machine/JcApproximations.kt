@@ -633,7 +633,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/body/graph"
+        return path != "/username"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
@@ -1043,13 +1043,14 @@ class JcMethodApproximationResolver(
                 method.enclosingClass
                     .toType()
                     .declaredFields
-                    .single { it.name == "bannerMode" }
-                    .field
+                    .singleOrNull { it.name == "bannerMode" }
+                    ?.field
             val springApplication = arguments.first().asExpr(ctx.addressSort)
-            scope.doWithState {
-                memory.writeField(springApplication, bannerModeField, ctx.addressSort, bannerModeOffValue, ctx.trueExpr)
-                skipMethodInvocationWithValue(methodCall, ctx.nullRef)
-            }
+            if (bannerModeField != null)
+                scope.doWithState {
+                    memory.writeField(springApplication, bannerModeField, ctx.addressSort, bannerModeOffValue, ctx.trueExpr)
+                    skipMethodInvocationWithValue(methodCall, ctx.nullRef)
+                }
 
             return true
         }
