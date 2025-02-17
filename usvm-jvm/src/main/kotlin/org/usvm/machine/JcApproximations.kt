@@ -1046,11 +1046,11 @@ class JcMethodApproximationResolver(
                     .singleOrNull { it.name == "bannerMode" }
                     ?.field
             val springApplication = arguments.first().asExpr(ctx.addressSort)
-            if (bannerModeField != null)
-                scope.doWithState {
+            scope.doWithState {
+                if (bannerModeField != null)
                     memory.writeField(springApplication, bannerModeField, ctx.addressSort, bannerModeOffValue, ctx.trueExpr)
-                    skipMethodInvocationWithValue(methodCall, ctx.nullRef)
-                }
+                skipMethodInvocationWithValue(methodCall, ctx.nullRef)
+            }
 
             return true
         }
