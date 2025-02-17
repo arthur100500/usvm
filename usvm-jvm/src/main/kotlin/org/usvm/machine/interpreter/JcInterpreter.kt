@@ -49,7 +49,6 @@ import org.usvm.api.allocateStaticRef
 import org.usvm.api.evalTypeEquals
 import org.usvm.api.mapTypeStream
 import org.usvm.api.targets.JcTarget
-import org.usvm.api.typeStreamOf
 import org.usvm.api.util.JcConcreteMemoryClassLoader
 import org.usvm.api.util.Reflection.toJavaClass
 import org.usvm.collection.array.UArrayIndexLValue
@@ -86,9 +85,7 @@ import org.usvm.memory.ULValue
 import org.usvm.memory.URegisterStackLValue
 import org.usvm.solver.USatResult
 import org.usvm.targets.UTargetsSet
-import org.usvm.types.single
 import org.usvm.types.singleOrNull
-import org.usvm.util.findMethod
 import org.usvm.util.name
 import org.usvm.util.outerClassInstanceField
 import org.usvm.util.write

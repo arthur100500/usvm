@@ -356,6 +356,7 @@ class JcConcreteMemory private constructor(
         }
     }
 
+    // TODO: move to bindings?
     private inner class JcConcretizer(
         state: JcState
     ) : JcTestStateResolver<Any?>(state.ctx, state.models.first(), state.memory, state.callStack.lastMethod().toTypedMethod) {
@@ -407,6 +408,7 @@ class JcConcreteMemory private constructor(
             }
 
             val array = super.resolveArray(ref, heapRef, type)
+            // TODO: reTrack here?
             if (array != null && !bindings.contains(addressInModel)) {
                 bindings.allocate(addressInModel, array, type)
             }
@@ -447,6 +449,7 @@ class JcConcreteMemory private constructor(
             }
 
             val obj = super.resolveObject(ref, heapRef, type)
+            // TODO: reTrack here?
             if (obj != null && !bindings.contains(addressInModel)) {
                 bindings.allocate(addressInModel, obj, type)
             }

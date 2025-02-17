@@ -445,10 +445,10 @@ class JcMethodApproximationResolver(
         if (method.name.equals("_println")) {
             scope.doWithState {
                 val firstArg = methodCall.arguments[0].asExpr(ctx.addressSort)
-                
+
                 if (firstArg is UNullRef) {
                     println("\u001B[36m null \u001B[0m")
-                } 
+                }
                 else {
                     val messageExpr = firstArg as UConcreteHeapRef
                     val message = memory.tryHeapRefToObject(messageExpr) as String
@@ -487,7 +487,7 @@ class JcMethodApproximationResolver(
                         it.annotations.any { it.name == "org.springframework.beans.factory.annotation.Value" }
                     }
                 }
-                val classes = ArrayList(types.map { it.toJavaClass(JcConcreteMemoryClassLoader) }.toList())
+                val classes = ArrayList(types.map { JcConcreteMemoryClassLoader.loadClass(it) }.toList())
                 val classesJcType = ctx.cp.findTypeOrNull(classes.javaClass.typeName)!!
                 val classesRef = memory.tryAllocateConcrete(classes, classesJcType)!!
                 skipMethodInvocationWithValue(methodCall, classesRef)
@@ -729,7 +729,7 @@ class JcMethodApproximationResolver(
     private fun createNullableSymbolic(type: JcType, sort: USort = ctx.addressSort) : UExpr<out USort>? {
         return scope.makeNullableSymbolicRef(type)?.asExpr(sort)
     }
-    
+
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, newValue: UExpr<out USort>?, newValueType: JcType) : Boolean {
         return scope.calcOnState {
             val userValueKeyUpper = userValueKey.uppercase()
@@ -882,7 +882,7 @@ class JcMethodApproximationResolver(
 
         return@with false
     }
-    
+
     private fun approximateMessageConverter(methodCall: JcMethodCall): Boolean = with(methodCall) {
         if (methodCall.method.name == "hasBody") {
             return scope.calcOnState {
@@ -1024,7 +1024,7 @@ class JcMethodApproximationResolver(
         if (methodName == "deduceMainApplicationClass") {
             scope.doWithState {
                 val firstMethod = callStack.firstMethod()
-                val mainApplicationClass = firstMethod.enclosingClass.toType().toJavaClass(JcConcreteMemoryClassLoader)
+                val mainApplicationClass = JcConcreteMemoryClassLoader.loadClass(firstMethod.enclosingClass)
                 val typeRef = memory.tryAllocateConcrete(mainApplicationClass, ctx.classType)!!
                 skipMethodInvocationWithValue(methodCall, typeRef)
             }
