@@ -34,6 +34,7 @@ import org.jacodb.impl.features.hierarchyExt
 import org.jacodb.impl.jacodb
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.FieldNode
 import org.usvm.CoverageZone
@@ -283,7 +284,14 @@ private fun generateTestClass(benchmark: BenchCp): BenchCp {
     dir.createDirectories()
 
     val repositoryType = cp.findClass("org.springframework.data.repository.Repository")
+    val importAnnotation = cp.findClass("org.springframework.context.annotation.Import")
     val mockAnnotation = cp.findClass("org.springframework.boot.test.mock.mockito.MockBean")
+    val securityConfigs = cp.nonAbstractClasses(benchmark.classLocations)
+        .filter {
+            it.annotations.any { annotation ->
+                annotation.name == "org.springframework.security.config.annotation.web.configuration.EnableWebSecurity"
+            }
+        }.toList()
     val repositories = runBlocking { cp.hierarchyExt() }
         .findSubClasses(repositoryType, entireHierarchy = true, includeOwn = false)
         .filter { benchmark.classLocations.contains(it.declaration.location.jcLocation) }
@@ -321,7 +329,9 @@ private fun generateTestClass(benchmark: BenchCp): BenchCp {
             field.visibleAnnotations = listOf(AnnotationNode(mockAnnotation.jvmDescriptor))
             classNode.fields.add(field)
         }
-
+        val importAnnotationNode = AnnotationNode(importAnnotation.jvmDescriptor)
+        importAnnotationNode.values = listOf("value", securityConfigs.map { Type.getType(it.jvmDescriptor) })
+        classNode.visibleAnnotations.add(importAnnotationNode)
         classNode.write(cp, dir.resolve("$testClassFullName.class"), checkClass = true)
     }
 
