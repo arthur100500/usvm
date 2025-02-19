@@ -1,11 +1,11 @@
-package org.usvm.instrumentation.util
+package org.usvm.jvm.util
 
+import com.sun.jdi.ClassNotLoadedException
 import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.ext.*
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.tree.MethodNode
-import org.usvm.instrumentation.testcase.executor.TestExecutorException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -24,12 +24,6 @@ fun JcClasspath.findFieldByFullNameOrNull(fieldFullName: String): JcField? {
 operator fun JcClasspath.get(klass: Class<*>) = this.findClassOrNull(klass.name)
 
 val JcClassOrInterface.typename
-    get() = TypeNameImpl(this.name)
-
-val JcMethod.typename
-    get() = TypeNameImpl(this.name)
-
-val JcTypedMethod.typename
     get() = TypeNameImpl(this.name)
 
 fun JcType.toStringType(): String =
@@ -113,7 +107,7 @@ fun findClassInLoader(name: String, classLoader: ClassLoader): Class<*> =
     try {
         Class.forName(name, true, classLoader)
     } catch (e: Throwable) {
-        throw TestExecutorException("Something gone wrong with $name loading. Exception: ${e::class.java.name}")
+        throw ClassNotLoadedException("Something gone wrong with $name loading. Exception: ${e::class.java.name}")
     }
 
 fun JcField.toJavaField(classLoader: ClassLoader): Field? =
@@ -138,14 +132,14 @@ fun TypeName.toJcClassOrInterface(jcClasspath: JcClasspath): JcClassOrInterface?
 fun JcMethod.toJavaMethod(classLoader: ClassLoader): Method {
     val klass = Class.forName(enclosingClass.name, false, classLoader)
     return (klass.methods + klass.declaredMethods).find { it.isSameSignatures(this) }
-        ?: throw TestExecutorException("Can't find method $name in classpath")
+        ?: throw MethodNotFoundException("Can't find method $name in classpath")
 }
 
 fun JcMethod.toJavaConstructor(classLoader: ClassLoader): Constructor<*> {
     require(isConstructor) { "Can't convert not constructor to constructor" }
     val klass = Class.forName(enclosingClass.name, true, classLoader)
     return (klass.constructors + klass.declaredConstructors).find { it.jcdbSignature == this.jcdbSignature }
-        ?: throw TestExecutorException("Can't find constructor of class ${enclosingClass.name}")
+        ?: throw MethodNotFoundException("Can't find constructor of class ${enclosingClass.name}")
 }
 
 val Method.jcdbSignature: String
