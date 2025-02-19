@@ -13,6 +13,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.Options
 import org.jacodb.api.jvm.JcClasspath
+import org.jacodb.api.jvm.JcClasspathFeature
 import org.jacodb.impl.JcRamErsSettings
 import org.jacodb.impl.features.InMemoryHierarchy
 import org.jacodb.impl.jacodb
@@ -56,21 +57,34 @@ class InstrumentedProcess private constructor() {
 
     private val synchronizer = Channel<State>(capacity = 1)
 
+    enum class UTestExecMode(val id: String) {
+        RESULT_ONLY("res"), STATE("state")
+    }
+
     fun start(args: Array<String>) = runBlocking {
         val options = Options()
         with(options) {
             addOption("cp", true, "Project class path")
+            addOption("ic", true, "Classes to be instrumented")
+            addOption("em", true, "UTestExecutor mode (res, state)")
             addOption("t", true, "Process timeout in seconds")
             addOption("p", true, "Rd port number")
         }
         val parser = DefaultParser()
         val cmd = parser.parse(options, args)
         val classPath = cmd.getOptionValue("cp") ?: error("Specify classpath")
+        val includedClasses = cmd.getOptionValues("ic").toList()
+
+        val execMode = when (cmd.getOptionValue("em")) {
+            "res" -> UTestExecMode.RESULT_ONLY
+            else -> UTestExecMode.STATE
+        }
+
         val timeout = cmd.getOptionValue("t").toIntOrNull()?.toDuration(DurationUnit.SECONDS)
             ?: error("Specify timeout in seconds")
         val port = cmd.getOptionValue("p").toIntOrNull() ?: error("Specify rd port number")
         val def = LifetimeDefinition()
-        initProcess(classPath)
+        initProcess(classPath, includedClasses, execMode)
         def.terminateOnException {
             def.launch {
                 checkAliveLoop(def, timeout)
@@ -83,6 +97,12 @@ class InstrumentedProcess private constructor() {
     }
 
     private suspend fun initProcess(classpath: String) {
+        initProcess(classpath, listOf(), UTestExecMode.STATE)
+    }
+
+    data class ObservedClassesFeature(val classes: List<String>) : JcClasspathFeature
+
+    private suspend fun initProcess(classpath: String, excludedClasses: List<String>, execMode: UTestExecMode) {
         fileClassPath = classpath.split(File.pathSeparatorChar).map { File(it) }
         val db = jacodb {
             persistenceImpl(JcRamErsSettings)
@@ -91,10 +111,13 @@ class InstrumentedProcess private constructor() {
             jre = File(InstrumentationModuleConstants.pathToJava)
             //persistent(location = "/home/.usvm/jcdb.db", clearOnStart = false)
         }
-        jcClasspath = db.classpath(fileClassPath)
+        jcClasspath = db.classpath(fileClassPath, listOf(ObservedClassesFeature(excludedClasses)))
         serializationCtx = SerializationContext(jcClasspath)
         ucp = URLClassPathLoader(fileClassPath)
-        uTestExecutor = UTestExecutor(jcClasspath, ucp)
+        uTestExecutor = when (execMode) {
+            UTestExecMode.RESULT_ONLY -> UTestExecutorCollectingResultOnly(jcClasspath, ucp)
+            UTestExecMode.STATE -> UTestExecutorCollectingState(jcClasspath, ucp)
+        }
     }
 
     private suspend fun initiate(lifetime: Lifetime, port: Int) {

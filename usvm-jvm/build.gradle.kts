@@ -154,7 +154,7 @@ tasks.withType<Test> {
         project(":usvm-jvm-instrumentation")
             .layout
             .buildDirectory
-            .file("libs/usvm-jvm-instrumentation-1.0.jar")
+            .file("libs/usvm-jvm-instrumentation-runner.jar")
             .get().asFile.absolutePath
     )
     environment(

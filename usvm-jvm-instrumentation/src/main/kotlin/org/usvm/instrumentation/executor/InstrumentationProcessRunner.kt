@@ -22,7 +22,9 @@ import kotlin.time.Duration
 class InstrumentationProcessRunner(
     private val testingProjectClasspath: String,
     private val jcClasspath: JcClasspath,
-    private val instrumentationClassFactory: KClass<out JcInstrumenterFactory<out JcInstrumenter>>
+    private val instrumentationClassFactory: KClass<out JcInstrumenterFactory<out JcInstrumenter>>,
+    private val instrumentedClasses: List<String> = listOf(),
+    private val executionMode: InstrumentedProcess.UTestExecMode = InstrumentedProcess.UTestExecMode.STATE
 ) {
 
     private lateinit var rdProcessRunner: RdProcessRunner
@@ -55,8 +57,10 @@ class InstrumentationProcessRunner(
 
     private fun createWorkerProcessArgs(rdPort: Int): List<String> =
         listOf("-cp", testingProjectClasspath) +
-        listOf("-t", "${InstrumentationModuleConstants.concreteExecutorProcessTimeout}") +
-        listOf("-p", "$rdPort")
+                listOf("-ic", instrumentedClasses.joinToString(" ")) +
+                listOf("-em", executionMode.id) +
+                listOf("-t", "${InstrumentationModuleConstants.concreteExecutorProcessTimeout}") +
+                listOf("-p", "$rdPort")
 
     suspend fun init(parentLifetime: Lifetime) {
         val processLifetime = LifetimeDefinition(parentLifetime)

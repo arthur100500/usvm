@@ -351,4 +351,3 @@ class MockHelper(val jcClasspath: JcClasspath, val classLoader: WorkerClassLoade
         }
     }
 }
-
