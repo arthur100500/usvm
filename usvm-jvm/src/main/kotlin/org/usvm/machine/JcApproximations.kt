@@ -72,6 +72,7 @@ import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapMergeInto
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapPut
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapRemove
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapSize
+import org.usvm.api.SpringReqSettings
 import org.usvm.api.initializeArray
 import org.usvm.api.initializeArrayLength
 import org.usvm.api.makeNullableSymbolicRef
@@ -115,6 +116,7 @@ import org.usvm.mkSizeExpr
 import org.usvm.types.single
 import java.util.ArrayList
 import java.util.TreeMap
+import org.usvm.machine.state.JcSpringState
 
 class JcMethodApproximationResolver(
     private val ctx: JcContext,
@@ -496,6 +498,37 @@ class JcMethodApproximationResolver(
             return true
         }
 
+        if (method.name.equals("_saveReqPath")) {
+            scope.doWithState {
+                // TODO: mb bug
+                (this as JcSpringState).reqSetup += Pair(
+                    SpringReqSettings.PATH,
+                    methodCall.arguments[0].asExpr(ctx.addressSort)
+                )
+                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
+            }
+            return true
+        }
+
+        if (method.name.equals("_saveReqKind")) {
+            scope.doWithState {
+                (this as JcSpringState).reqSetup += Pair(
+                    SpringReqSettings.KIND,
+                    methodCall.arguments[0].asExpr(ctx.addressSort)
+                )
+                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
+            }
+            return true
+        }
+
+        if (method.name.equals("_saveResSave")) {
+            scope.doWithState {
+                (this as JcSpringState).res = methodCall.arguments[0].asExpr(ctx.integerSort)
+                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
+            }
+            return true
+        }
+
         if (method.name.equals("_classesWithFieldsValueAnnotation")) {
             scope.doWithState {
                 val types = ctx.classesOfLocations(options.projectLocations!!).filter {
@@ -709,6 +742,7 @@ class JcMethodApproximationResolver(
 
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, newValue: UExpr<out USort>?, newValueType: JcType) : Boolean {
         return scope.calcOnState {
+            this as JcSpringState
             val userValueKeyUpper = userValueKey.uppercase()
             var storedValue = getUserDefinedValue(userValueKeyUpper)
 
@@ -754,6 +788,7 @@ class JcMethodApproximationResolver(
             val parameter = methodCall.arguments[0] as UConcreteHeapRef
             val source = methodCall.arguments[4]
             return scope.calcOnState {
+                this as JcSpringState
                 val correctEntry = userDefinedValues.firstNotNullOf { if (it.value == source) it else null }
                 val type = getTypeFromParameter(parameter)
 
@@ -811,6 +846,7 @@ class JcMethodApproximationResolver(
 
         if (method.name == "set") {
             return scope.calcOnState {
+                this as JcSpringState
                 val prefix = getRequestMapPrefix(arguments[0].asExpr(ctx.addressSort))
                 val keyArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
                 val key = memory.tryHeapRefToObject(keyArgument) as String?
@@ -1005,6 +1041,7 @@ class JcMethodApproximationResolver(
         }
 
         if (methodName == "printBanner") {
+            // TODO: depends on version
             val bannerType = ctx.cp.findTypeOrNull(method.returnType.typeName) as JcClassType
             val bannerModeType = bannerType.innerTypes.single()
             check(bannerModeType.jcClass.isEnum)
