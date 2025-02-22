@@ -9,6 +9,7 @@ import kotlin.io.path.exists
 plugins {
     id("usvm.kotlin-conventions")
     id("org.springframework.boot") version "3.2.0"
+    id("io.spring.dependency-management") version "1.1.4"
 }
 
 val samples by sourceSets.creating {
@@ -74,6 +75,8 @@ val springApproximationsDeps by configurations.creating
 dependencies {
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-test:3.2.0")
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-web:3.2.0")
+    springApproximationsDeps("org.springframework.boot:spring-boot-starter-security:3.3.4")
+    springApproximationsDeps("org.springframework.security:spring-security-test:6.2.0")
     springApproximationsDeps("org.springframework:spring-jcl:6.1.1")
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-data-jpa:3.2.0")
 }

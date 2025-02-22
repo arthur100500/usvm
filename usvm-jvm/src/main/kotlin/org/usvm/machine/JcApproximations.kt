@@ -235,6 +235,10 @@ class JcMethodApproximationResolver(
             if (approximateRequestMap(methodCall)) return true
         }
 
+        if (className.contains("org.springframework.mock.web.MockHttpServletRequest")) {
+            if (approximateMockHttpRequest(methodCall)) return true
+        }
+
         if (className.contains("java.lang.String")) {
             if (approximateStringMethod(methodCall)) return true
         }
@@ -379,16 +383,15 @@ class JcMethodApproximationResolver(
         if (method.name == "isInstance") {
             val classRef = arguments[0].asExpr(ctx.addressSort)
             val objectRef = arguments[1].asExpr(ctx.addressSort)
-            scope.doWithState {
-                val classRefTypeRepresentative =
-                    memory.read(UFieldLValue(ctx.addressSort, classRef, ctx.classTypeSyntheticField))
-                classRefTypeRepresentative as UConcreteHeapRef
-                val classType = memory.types.typeOf(classRefTypeRepresentative.address)
+            return scope.calcOnState {
+                if (classRef is UConcreteHeapRef)
+                    return@calcOnState false
+                val classObj = memory.tryHeapRefToObject(classRef as UConcreteHeapRef) as Class<*>
+                val classType = ctx.cp.findType(classObj.name);
                 val isExpr = memory.types.evalIsSubtype(objectRef, classType)
                 skipMethodInvocationWithValue(methodCall, isExpr)
+                return@calcOnState true
             }
-
-            return true
         }
 
         return false
@@ -466,12 +469,16 @@ class JcMethodApproximationResolver(
 
         if (method.name.equals("_println")) {
             scope.doWithState {
-                val messageExpr = methodCall.arguments[0].asExpr(ctx.addressSort)
-                if (messageExpr is UConcreteHeapRef) {
-                    val message = memory.tryHeapRefToObject(messageExpr) as String
-                    println("\u001B[36m" + message + "\u001B[0m")
-                }
+                val firstArg = methodCall.arguments[0].asExpr(ctx.addressSort)
 
+                if (firstArg is UNullRef) {
+                    println("\u001B[36m null \u001B[0m")
+                }
+                else {
+                    val messageExpr = firstArg as UConcreteHeapRef
+                    val message = memory.tryHeapRefToObject(messageExpr) as String?
+                    println("\u001B[36m" + (message ?: "null") + "\u001B[0m")
+                }
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
             }
 
@@ -681,7 +688,7 @@ class JcMethodApproximationResolver(
         val values = annotation.values
         // TODO: suppport list #CM
         val method = (values["method"] as List<*>)[0] as JcField
-        return method.name.lowercase()
+        return method.name.uppercase()
     }
 
     private fun combinePaths(basePath: String, localPath: String): String {
@@ -709,11 +716,11 @@ class JcMethodApproximationResolver(
                     val kind =
                         when (annotation.name) {
                             "org.springframework.web.bind.annotation.RequestMapping" -> getRequestMappingMethod(annotation)
-                            "org.springframework.web.bind.annotation.GetMapping" -> "get"
-                            "org.springframework.web.bind.annotation.PostMapping" -> "post"
-                            "org.springframework.web.bind.annotation.PutMapping" -> "put"
-                            "org.springframework.web.bind.annotation.DeleteMapping" -> "delete"
-                            "org.springframework.web.bind.annotation.PatchMapping" -> "patch"
+                            "org.springframework.web.bind.annotation.GetMapping" -> "GET"
+                            "org.springframework.web.bind.annotation.PostMapping" -> "POST"
+                            "org.springframework.web.bind.annotation.PutMapping" -> "PUT"
+                            "org.springframework.web.bind.annotation.DeleteMapping" -> "DELETE"
+                            "org.springframework.web.bind.annotation.PatchMapping" -> "PATCH"
                             else -> null
                         }
 
@@ -743,6 +750,7 @@ class JcMethodApproximationResolver(
     private fun skipWithValueFromScope(methodCall: JcMethodCall, userValueKey: String, newValue: UExpr<out USort>?, newValueType: JcType) : Boolean {
         return scope.calcOnState {
             this as JcSpringState
+            // TODO: uppercase only for some prefixes, implement while refactor #AA
             val userValueKeyUpper = userValueKey.uppercase()
             var storedValue = getUserDefinedValue(userValueKeyUpper)
 
@@ -762,7 +770,7 @@ class JcMethodApproximationResolver(
 
     private fun getTypeFromParameter(parameter: UHeapRef) : JcType? = scope.calcOnState {
         // TODO: rework (ask Artur)
-        val annotatedMethodParameterType = memory.types.getTypeStream(parameter).single() as JcClassType
+        val annotatedMethodParameterType = memory.types.typeOf((parameter as UConcreteHeapRef).address) as JcClassType
         val parameterTypeField = annotatedMethodParameterType.allInstanceFields.single {it.name == "parameterType"}
         val parameterTypeRef = memory.readField(parameter, parameterTypeField.field, ctx.addressSort) as UConcreteHeapRef
         val typeType = memory.types.getTypeStream(parameterTypeRef).single() as JcClassType
@@ -826,6 +834,47 @@ class JcMethodApproximationResolver(
         return@calcOnState sourcePrefix
     }
 
+    private fun approximateMockHttpRequest(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        // TODO: Refactor #AA
+        if (method.name == "setAttribute") {
+                val keyArgument = arguments[1].asExpr(ctx.addressSort)
+            val valueArgument = arguments[2].asExpr(ctx.addressSort)
+            return scope.calcOnState {
+                this as JcSpringState
+                val key = memory.tryHeapRefToObject(keyArgument as UConcreteHeapRef) as String?
+                val value = memory.tryHeapRefToObject(valueArgument as UConcreteHeapRef)
+
+                // TODO: Use other symbolic check if possible #AA
+                if (value != null || key == null)
+                    return@calcOnState false
+
+                val userValueKey = "ATTRIBUTE_$key"
+                userDefinedValues = userDefinedValues.filter { it.key != userValueKey }
+                userDefinedValues += Pair(userValueKey, Pair(valueArgument, ctx.cp.objectType))
+
+                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
+
+                return@calcOnState true
+            }
+        }
+
+        if (method.name == "getAttribute") {
+            val keyArgument = arguments[1].asExpr(ctx.addressSort)
+            return scope.calcOnState {
+                this as JcSpringState
+                val key = memory.tryHeapRefToObject(keyArgument as UConcreteHeapRef) as String? ?: return@calcOnState false
+
+                val userValueKey = "ATTRIBUTE_$key"
+                val writtenValue = userDefinedValues.get(userValueKey) ?: return@calcOnState false
+
+                skipMethodInvocationWithValue(methodCall, writtenValue.first)
+                return@calcOnState true
+            }
+        }
+
+        return false;
+    }
+
     private fun approximateRequestMap(methodCall: JcMethodCall): Boolean = with(methodCall) {
         if (method.name == "get") {
             return scope.calcOnState {
@@ -850,13 +899,14 @@ class JcMethodApproximationResolver(
                 val prefix = getRequestMapPrefix(arguments[0].asExpr(ctx.addressSort))
                 val keyArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
                 val key = memory.tryHeapRefToObject(keyArgument) as String?
-                val value = arguments[0].asExpr(ctx.addressSort)
+                val value = arguments[2].asExpr(ctx.addressSort)
 
                 if (key == null) {
                     println("Non-concrete request map keys are not supported")
                     return@calcOnState false
                 }
 
+                // TODO: uppercase only for some prefixes, implement while refactor #AA
                 val userValueKeyUpper = "${prefix}_$key".uppercase()
                 userDefinedValues = userDefinedValues.filter { it.key != userValueKeyUpper }
                 userDefinedValues += Pair(userValueKeyUpper, Pair(value, ctx.cp.objectType))

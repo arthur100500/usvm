@@ -885,6 +885,14 @@ class JcConcreteMemory private constructor(
 
             "org.springframework.http.HttpHeaders#getContentType():org.springframework.http.MediaType",
 
+            "org.springframework.security.web.access.intercept.AuthorizationFilter#getAuthentication():org.springframework.security.core.Authentication",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#getContext():org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors\$SecurityContextRequestPostProcessorSupport\$TestSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.web.context.DelegatingSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.web.context.RequestAttributeSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#lambda\$getDeferredContext\$0(org.springframework.security.core.context.SecurityContext):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#getDeferredContext():java.util.function.Supplier",
+
             // TODO: Temporary, to check JSON object creation issues
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#read(java.lang.reflect.Type,java.lang.Class,org.springframework.http.HttpInputMessage):java.lang.Object",
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#readJavaType(com.fasterxml.jackson.databind.JavaType,org.springframework.http.HttpInputMessage):java.lang.Object",
