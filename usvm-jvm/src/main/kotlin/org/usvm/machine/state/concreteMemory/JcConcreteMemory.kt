@@ -349,10 +349,11 @@ class JcConcreteMemory private constructor(
                 && method is JcEnrichedVirtualMethod && method.enclosingClass.toType().isStaticApproximation
     }
 
-    public fun concretize(state: JcState, ref: UConcreteHeapRef, heapRef: UHeapRef, type: JcClassType): Any? {
+    public fun concretize(state: JcState, expr: UExpr<out USort>, type: JcClassType, fromModel: Boolean): Any? {
         val concretizer = JcConcretizer(state)
-        return concretizer.withMode(ResolveMode.MODEL){
-            return@withMode concretizer.resolveObject(ref, heapRef, type);
+        val mode = if (fromModel) ResolveMode.MODEL else ResolveMode.CURRENT
+        return concretizer.withMode(mode) {
+            return@withMode concretizer.resolveExpr(expr, type);
         }
     }
 
@@ -494,7 +495,7 @@ class JcConcreteMemory private constructor(
         }
     }
 
-    private fun concretize(
+    public fun concretize(
         state: JcState,
         exprResolver: JcExprResolver,
         stmt: JcMethodCall,
@@ -879,7 +880,15 @@ class JcConcreteMemory private constructor(
             "org.springframework.security.web.session.DisableEncodeUrlFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
             "org.springframework.security.web.header.HeaderWriterFilter#doHeadersAfter(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
             "org.springframework.http.HttpHeaders#getContentType():org.springframework.http.MediaType",
-
+            
+            "org.springframework.security.web.access.intercept.AuthorizationFilter#getAuthentication():org.springframework.security.core.Authentication",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#getContext():org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors\$SecurityContextRequestPostProcessorSupport\$TestSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.web.context.DelegatingSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.web.context.RequestAttributeSecurityContextRepository#loadContext(org.springframework.security.web.context.HttpRequestResponseHolder):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#lambda\$getDeferredContext\$0(org.springframework.security.core.context.SecurityContext):org.springframework.security.core.context.SecurityContext",
+            "org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy#getDeferredContext():java.util.function.Supplier",
+            
             // TODO: Temporary, to check JSON object creation issues
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#read(java.lang.reflect.Type,java.lang.Class,org.springframework.http.HttpInputMessage):java.lang.Object",
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#readJavaType(com.fasterxml.jackson.databind.JavaType,org.springframework.http.HttpInputMessage):java.lang.Object",

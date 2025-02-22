@@ -2,11 +2,8 @@ package org.usvm.machine.state.concreteMemory.ps
 
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.cfg.JcExpr
-import org.usvm.UConcreteHeapRef
-import org.usvm.UHeapRef
-import org.usvm.UPathSelector
+import org.usvm.*
 import org.usvm.api.util.JcTestStateResolver
-import org.usvm.logger
 import org.usvm.machine.state.JcState
 import org.usvm.machine.state.concreteMemory.JcConcreteMemory
 import kotlin.math.exp
@@ -41,10 +38,11 @@ class JcConcreteMemoryPathSelector(
         selector.add(states)
     }
 
-    private fun getConcreteValue(state: JcState, expr: UConcreteHeapRef) : Any? {
-        if (expr.address == 0) return "null"
+    private fun getConcreteValue(state: JcState, expr: UExpr<out USort>) : Any? {
+        if (expr is UConcreteHeapRef && expr.address == 0) return "null"
         val type = state.ctx.stringType as JcClassType
-        return (state.memory as JcConcreteMemory).concretize(state, expr, expr as UHeapRef, type)
+        val fromModel = expr is UConcreteHeapRef && expr.address < 0
+        return (state.memory as JcConcreteMemory).concretize(state, expr, type, fromModel)
     }
 
     private fun printSpringTestSummary(state: JcState) {
@@ -52,11 +50,7 @@ class JcConcreteMemoryPathSelector(
         val userDefinedValues = state.userDefinedValues
         userDefinedValues.forEach {
             val ref = state.models[0].eval(it.value.first)
-            var value = ref.toString()
-
-            if (ref is UConcreteHeapRef)
-                value = getConcreteValue(state, ref).toString()
-
+            val value = getConcreteValue(state, ref).toString()
             logger.info("\uD83E\uDD7A ${it.key}: $value")
         }
     }
