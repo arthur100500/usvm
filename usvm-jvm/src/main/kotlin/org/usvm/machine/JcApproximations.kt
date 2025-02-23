@@ -789,7 +789,7 @@ class JcMethodApproximationResolver(
             val source = methodCall.arguments[4]
             return scope.calcOnState {
                 this as JcSpringState
-                val correctEntry = userDefinedValues.firstNotNullOf { if (it.value == source) it else null }
+                val correctEntry = userDefinedValues.firstNotNullOf { if (it.value.first == source) it else null }
                 val type = getTypeFromParameter(parameter)
 
                 if (type == null) {

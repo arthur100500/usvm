@@ -447,7 +447,7 @@ class JcSpringTest private constructor(
 
                 return paramNames.map {
                     params.getValue(it)
-                }.also { assert(it.size == params.size) }
+                }.also { check(it.size == params.size) }
             }
 
             val expr = state.reqSetup[SpringReqSettings.PATH] ?: throw IllegalArgumentException("No path found")
