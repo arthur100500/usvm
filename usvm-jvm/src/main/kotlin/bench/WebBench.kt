@@ -202,9 +202,7 @@ internal object JcInitFeature: JcInstExtFeature {
             return list
 
         val mutableList = list.toMutableList()
-        // TODO: use method.enclosingClass.name.typeName after jacodb fixes
-        // TODO: fix .typeName inside jacodb
-        val typeName = TypeNameImpl(method.enclosingClass.name)
+        val typeName = method.enclosingClass.name.typeName
         val callExpr = JcRawStaticCallExpr(
             declaringClass = InitHelper::class.java.name.typeName,
             methodName = InitHelper::afterInit.javaName,
