@@ -40,6 +40,7 @@ val approximationsVersion = "0.0.0"
 dependencies {
     implementation(project(":usvm-core"))
     implementation(project(":usvm-jvm-dataflow"))
+    implementation(project(":usvm-jvm-instrumentation"))
 
     implementation(Libs.jacodb_api_jvm)
     implementation(Libs.jacodb_core)
@@ -210,6 +211,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
 
+    environment("usvm-jvm-instrumentation-jar", "/home/kogora/AdiskD/PROG_SPBGU_HW/PROG_SPBU_3/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
+    environment("usvm-jvm-collectors-jar", "/home/kogora/AdiskD/PROG_SPBGU_HW/PROG_SPBU_3/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
     val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
     val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
     val springApproximationDepsJarPath = springApproximationsDeps.resolvedConfiguration.files

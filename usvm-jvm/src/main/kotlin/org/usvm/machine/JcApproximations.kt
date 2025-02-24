@@ -667,7 +667,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return false
+        return path != "/owners/find"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {

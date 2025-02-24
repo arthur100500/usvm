@@ -1,5 +1,9 @@
 package bench
 
+import java.io.File
+import kotlin.time.Duration
+import kotlinx.coroutines.runBlocking
+import org.jacodb.api.jvm.JcClasspath
 import org.usvm.api.JcSpringTest
 import org.usvm.jvm.rendering.JcSpringTestKind
 import org.usvm.jvm.rendering.JcSpringTestMeta
@@ -9,17 +13,45 @@ import org.usvm.machine.JcSpringMachine
 import org.usvm.machine.state.JcSpringState
 import org.usvm.statistics.UMachineObserver
 
-class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine) : UMachineObserver<JcSpringState> {
+import org.usvm.instrumentation.executor.UTestConcreteExecutor
+import org.usvm.instrumentation.executor.UTestExecutionOptions
+import org.usvm.instrumentation.instrumentation.JcRuntimeTraceInstrumenterFactory
+import org.usvm.instrumentation.rd.InstrumentedProcess
+
+class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: JcClasspath) :
+    UMachineObserver<JcSpringState> {
+    private val exec: UTestConcreteExecutor
+
+    init {
+        val opt = UTestExecutionOptions(execMode= InstrumentedProcess.UTestExecMode.RESULT_ONLY)
+        exec = UTestConcreteExecutor(
+            instrumentationClassFactory = JcRuntimeTraceInstrumenterFactory::class,
+            testingProjectClasspath = cp.locations.joinToString(File.pathSeparator) { it.path },
+            jcClasspath = cp,
+            timeout = Duration.INFINITE,
+            opts = opt
+        )
+        runBlocking { exec.ensureRunnerAlive() }
+        print("hehre")
+    }
+
     override fun onStateTerminated(state: JcSpringState, stateReachable: Boolean) {
         state.callStack.push(state.entrypoint, state.entrypoint.instList[0])
         if (!stateReachable || state.reqSetup.size < 2) return
         try {
             val test = JcSpringTest.generateFromState(state)
+            val testDsl = test.generateTestDSL()
+
+            // TODO: testIsValidAndMayBeRendered
+
+            val res = exec.executeSync(testDsl)
+            println(res)
+
             JcSpringTestRenderManager().render(
                 state.entrypoint.enclosingClass.classpath,
                 listOf(
                     UTestRenderWrapper(
-                        test.generateTestDSL(),
+                        testDsl,
                         JcSpringTestMeta(test.generatedTestClass, test.reqPath.path, JcSpringTestKind.WebMVC)
                     )
                 )
@@ -32,6 +64,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine) : UMa
 
     override fun onMachineStopped() {
         machine.testPool.removeIf(::testIsValidAndMayBeRendered)
+        exec.close()
     }
 
     // TODO: reproduction
