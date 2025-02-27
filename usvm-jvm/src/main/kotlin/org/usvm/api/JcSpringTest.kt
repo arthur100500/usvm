@@ -19,6 +19,8 @@ import org.usvm.api.util.JcTestStateResolver.ResolveMode
 import org.usvm.machine.JcContext
 import org.usvm.machine.state.JcSpringState
 import org.usvm.machine.state.concreteMemory.JcConcreteMemory
+import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
+import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 import org.usvm.test.api.ArithmeticOperationType
 import org.usvm.test.api.ConditionType
 import org.usvm.test.api.UTest
@@ -134,11 +136,6 @@ enum class SpringReqKind {
             }
     }
 
-}
-
-enum class SpringReqSettings {
-    PATH,
-    KIND,
 }
 
 data class SpringResponse(
@@ -430,7 +427,7 @@ class JcSpringTest private constructor(
         }
 
         private fun getReqKind(state: JcSpringState): SpringReqKind {
-            val expr = state.reqSetup[SpringReqSettings.KIND] ?: throw IllegalArgumentException("No path found")
+            val expr = state.requestMethod ?: throw IllegalArgumentException("No path found")
             val type = state.ctx.stringType as JcClassType
             val kind = concretizeSimple(REQUEST_MOD, state, expr, type)
             assert(kind != null)
@@ -450,19 +447,17 @@ class JcSpringTest private constructor(
                 }.also { check(it.size == params.size) }
             }
 
-            val expr = state.reqSetup[SpringReqSettings.PATH] ?: throw IllegalArgumentException("No path found")
+            val expr = state.requestPath ?: throw IllegalArgumentException("No path found")
             val type = state.ctx.stringType as JcClassType
             val path = concretizeSimple(REQUEST_MOD, state, expr, type)
             assert(path != null)
 
             val concreteReqParams = mutableMapOf<String, Any>().also { map ->
-                state.userDefinedValues.forEach { (key, value) ->
-                    if (key.contains("PATH_*".toRegex())) {
-                        val name = key.split("_").also { it.subList(1, it.size) }.joinToString("_")
-                        concretizeSimple(REQUEST_MOD, state, value.first, value.second).also {
-                            assert(it != null) //TODO: is it correct? (param have name? but == null)
-                            map[name] = it!!
-                        }
+                state.getPinnedValuesOfSource(JcSpringPinnedValueSource.REQUEST_PATH_VARIABLE).forEach {
+                    val name = it.key.getName()
+                    concretizeSimple(REQUEST_MOD, state, it.value.getExpr(), it.value.getType()).also {
+                        assert(it != null) //TODO: is it correct? (param have name? but == null)
+                        map[name!!] = it!!
                     }
                 }
             }
@@ -492,21 +487,13 @@ class JcSpringTest private constructor(
             }
 
             return mutableListOf<SpringReqAttr>().also { list ->
-                state.userDefinedValues.forEach { (key, value) ->
-                    //TODO: (MCHK): null -> no attr
-                    when {
-                        key.contains("PARAM_*".toRegex()) -> {
-                            val name = key.split("_").let { it.subList(1, it.size) }.joinToString("_")
-                            getHeaderAttr(name, value.first, value.second)
-                        }
-
-                        key.contains("HEADER_*".toRegex()) -> {
-                            val name = key.split("_").let { it.subList(1, it.size) }.joinToString("_")
-                            getParamAttr(name, value.first, value.second)
-                        }
-
-                        else -> null
-                    }?.also { list.add(it) }
+                state.getPinnedValuesOfSource(JcSpringPinnedValueSource.REQUEST_HEADER).forEach { (key, value) ->
+                    val name = key.getName()
+                    getHeaderAttr(name!!, value.getExpr(), value.getType())?.also { list.add(it) }
+                }
+                state.getPinnedValuesOfSource(JcSpringPinnedValueSource.REQUEST_PARAM).forEach { (key, value) ->
+                    val name = key.getName()
+                    getParamAttr(name!!, value.getExpr(), value.getType())?.also { list.add(it) }
                 }
             }
         }
