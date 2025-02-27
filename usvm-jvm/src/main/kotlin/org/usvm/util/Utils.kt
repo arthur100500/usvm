@@ -13,6 +13,14 @@ import org.usvm.memory.UWritableMemory
 import org.usvm.uctx
 import kotlin.reflect.KClass
 
+fun JcContext.classesOfLocations(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> {
+    return locations
+        .asSequence()
+        .flatMap { it.classNames ?: emptySet() }
+        .mapNotNull { cp.findClassOrNull(it) }
+        .filterNot { it is JcUnknownClass }
+}
+
 fun JcContext.extractJcType(clazz: KClass<*>): JcType = cp.findTypeOrNull(clazz.qualifiedName!!)!!
 
 fun JcContext.extractJcRefType(clazz: KClass<*>): JcRefType = extractJcType(clazz) as JcRefType

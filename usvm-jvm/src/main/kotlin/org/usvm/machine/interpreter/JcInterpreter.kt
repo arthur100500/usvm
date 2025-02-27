@@ -82,8 +82,8 @@ typealias JcStepScope = StepScope<JcState, JcType, JcInst, JcContext>
 /**
  * A JacoDB interpreter.
  */
-class JcInterpreter(
-    private val ctx: JcContext,
+open class JcInterpreter(
+    protected val ctx: JcContext,
     private val applicationGraph: JcApplicationGraph,
     private val options: JcMachineOptions,
     private val observer: JcInterpreterObserver? = null,
@@ -94,9 +94,17 @@ class JcInterpreter(
         val logger = object : KLogging() {}.logger
     }
 
+    protected open fun createState(
+        initOwnership: MutabilityOwnership,
+        method: JcMethod,
+        targets: UTargetsSet<JcTarget, JcInst>
+    ): JcState {
+        return JcState(ctx, initOwnership, method, targets = targets)
+    }
+
     fun getInitialState(method: JcMethod, targets: List<JcTarget> = emptyList()): JcState {
         val initOwnership = MutabilityOwnership()
-        val state = JcState(ctx, initOwnership, method, targets = UTargetsSet.from(targets))
+        val state = createState(initOwnership, method, UTargetsSet.from(targets))
         val typedMethod = with(applicationGraph) { method.typed }
 
         val entrypointArguments = mutableListOf<Pair<JcRefType, UHeapRef>>()
@@ -227,7 +235,7 @@ class JcInterpreter(
 
     private val typeSelector = JcFixedInheritorsNumberTypeSelector()
 
-    private fun callMethod(
+    protected open fun callMethod(
         scope: JcStepScope,
         stmt: JcMethodCallBaseInst,
         exprResolver: JcExprResolver
@@ -269,11 +277,11 @@ class JcInterpreter(
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
-                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
+                    println("\u001B[31m" + "Approximated ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                     return
                 }
 
-                println("\u001B[31m" + "Calling ${stmt.method}" + "\u001B[0m")
+                println("\u001B[31m" + "Calling ${stmt.method.humanReadableSignature}" + "\u001B[0m")
 
                 val entryPoint = applicationGraph.entryPoints(method).singleOrNull()
 
@@ -305,7 +313,7 @@ class JcInterpreter(
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
-                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
+                    println("\u001B[31m" + "Approximated ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                     return
                 }
 
@@ -323,17 +331,16 @@ class JcInterpreter(
             }
 
             is JcDynamicMethodCallInst -> {
-                println("\u001B[31m" + "Calling dynamic ${stmt.method}" + "\u001B[0m")
+                println("\u001B[31m" + "Calling dynamic ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
-                    println("\u001B[31m" + "Approximated ${stmt.method}" + "\u001B[0m")
+                    println("\u001B[31m" + "Approximated ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                     return
                 }
 
                 mockMethod(scope, stmt, stmt.dynamicCall.callSiteReturnType)
             }
-            else -> Unit
         }
     }
 
@@ -671,9 +678,12 @@ class JcInterpreter(
     private val JcInst.nextStmt get() = location.method.instList[location.index + 1]
     private operator fun JcInstList<JcInst>.get(instRef: JcInstRef): JcInst = this[instRef.index]
 
-    private fun allocateString(): UConcreteHeapRef {
+    protected open fun allocateString(
+        memory: UMemory<JcType, JcMethod>,
+        value: String
+    ): Pair<UConcreteHeapRef, Boolean> {
         // Allocate globally unique ref with a negative address
-        return ctx.allocateStaticRef()
+        return ctx.allocateStaticRef() to false
     }
 
     // TODO: make this region! (like interningPool)
@@ -689,7 +699,9 @@ class JcInterpreter(
         val interningPool = memory.getRegion(JcStringInterningRegionId) as JcStringInterningRegion
         var alreadyInitialized = false
         val (address, region) = interningPool.getOrPut(value) {
-            allocateString()
+            val (ref, initialized) = allocateString(memory, value)
+            alreadyInitialized = initialized
+            ref
         }
         memory.setRegion(JcStringInterningRegionId, region)
 
@@ -701,9 +713,12 @@ class JcInterpreter(
         return address to alreadyInitialized
     }
 
-    private fun allocateTypeInstance(): UConcreteHeapRef {
+    protected open fun allocateTypeInstance(
+        memory: UMemory<JcType, JcMethod>,
+        type: JcType
+    ): Pair<UConcreteHeapRef, Boolean> {
         // Allocate globally unique ref with a negative address
-        return ctx.allocateStaticRef()
+        return ctx.allocateStaticRef() to false
     }
 
     private fun typeInstanceAllocator(
@@ -715,7 +730,9 @@ class JcInterpreter(
         val interningPool = memory.getRegion(JcClassInterningRegionId) as JcClassInterningRegion
         var alreadyInitialized = false
         val (address, region) = interningPool.getOrPut(type) {
-            allocateTypeInstance()
+            val (ref, initialized) = allocateTypeInstance(memory, type)
+            alreadyInitialized = initialized
+            ref
         }
         memory.setRegion(JcClassInterningRegionId, region)
 
