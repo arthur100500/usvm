@@ -390,7 +390,7 @@ class JcSpringTest private constructor(
         val RESPONSE_MOD = ResolveMode.CURRENT
 
         fun generateFromState(state: JcSpringState): JcSpringTest =
-            if (state.res != null)
+            if (state.response != null)
                 generateResponseTest(state)
             else
                 generateExnTest(state)
@@ -499,8 +499,8 @@ class JcSpringTest private constructor(
         }
 
         private fun getSpringResponse(cp: JcClasspath, state: JcSpringState): SpringResponse {
-            assert(state.res != null)
-            val expr = state.res ?: throw IllegalArgumentException("No Response")
+            assert(state.response != null)
+            val expr = state.response ?: throw IllegalArgumentException("No Response")
             val valueExpr = state.models[0].eval(expr)
 
             val type = cp.int

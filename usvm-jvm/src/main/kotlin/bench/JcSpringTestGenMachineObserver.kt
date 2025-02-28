@@ -12,7 +12,7 @@ import org.usvm.statistics.UMachineObserver
 class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine) : UMachineObserver<JcSpringState> {
     override fun onStateTerminated(state: JcSpringState, stateReachable: Boolean) {
         state.callStack.push(state.entrypoint, state.entrypoint.instList[0])
-        if (!stateReachable || state.reqSetup.size < 2) return
+        if (!stateReachable || state.requestPath == null || state.requestMethod == null) return
         try {
             val test = JcSpringTest.generateFromState(state)
             JcSpringTestRenderManager().render(
