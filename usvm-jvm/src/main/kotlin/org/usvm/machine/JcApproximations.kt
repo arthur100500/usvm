@@ -105,16 +105,16 @@ import kotlin.reflect.KFunction0
 import kotlin.reflect.KFunction1
 import kotlin.reflect.KFunction2
 
-class JcMethodApproximationResolver(
-    private val ctx: JcContext,
-    private val applicationGraph: JcApplicationGraph,
+open class JcMethodApproximationResolver(
+    protected val ctx: JcContext,
+    protected val applicationGraph: JcApplicationGraph
 ) {
     private var currentScope: JcStepScope? = null
-    private val scope: JcStepScope
+    protected val scope: JcStepScope
         get() = checkNotNull(currentScope)
 
     private var currentExprResolver: JcExprResolver? = null
-    private val exprResolver: JcExprResolver
+    protected val exprResolver: JcExprResolver
         get() = checkNotNull(currentExprResolver)
 
     private val usvmApiEngine by lazy { ctx.cp.findClassOrNull<Engine>() }
@@ -133,7 +133,7 @@ class JcMethodApproximationResolver(
         this.currentExprResolver = null
     }
 
-    private fun approximate(callJcInst: JcMethodCall): Boolean {
+    protected open fun approximate(callJcInst: JcMethodCall): Boolean {
         if (skipMethodIfThrowable(callJcInst)) {
             return true
         }

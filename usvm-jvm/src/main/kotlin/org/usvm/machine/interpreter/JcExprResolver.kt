@@ -134,10 +134,10 @@ import org.usvm.utils.logAssertFailure
  * An expression resolver based on JacoDb 3-address code. A result of resolving is `null`, iff
  * the original state is dead, as stated in [JcStepScope].
  */
-class JcExprResolver(
+open class JcExprResolver(
     private val ctx: JcContext,
-    private val scope: JcStepScope,
-    val options: JcMachineOptions,
+    protected val scope: JcStepScope,
+    private val options: JcMachineOptions,
     localToIdx: (JcMethod, JcImmediate) -> Int,
     mkTypeRef: (JcState, JcType) -> Pair<UConcreteHeapRef, Boolean>,
     mkStringConstRef: (JcState, String, Boolean) -> Pair<UConcreteHeapRef, Boolean>,
@@ -543,7 +543,7 @@ class JcExprResolver(
         return expr
     }
 
-    private fun assertIsSubtype(expr: KExpr<out USort>, type: JcType): Boolean {
+    protected fun assertIsSubtype(expr: KExpr<out USort>, type: JcType): Boolean {
         if (type is JcRefType) {
             val heapRef = expr.asExpr(ctx.addressSort)
             val isExpr = scope.calcOnState { memory.types.evalIsSubtype(heapRef, type) }
@@ -559,7 +559,7 @@ class JcExprResolver(
 
     // region lvalue resolving
 
-    private fun resolveFieldRef(instance: JcValue?, field: JcTypedField): ULValue<*, *>? {
+    protected fun resolveFieldRef(instance: JcValue?, field: JcTypedField): ULValue<*, *>? {
         with(ctx) {
             val instanceRef = if (instance != null) {
                 resolveJcExpr(instance)?.asExpr(addressSort) ?: return null

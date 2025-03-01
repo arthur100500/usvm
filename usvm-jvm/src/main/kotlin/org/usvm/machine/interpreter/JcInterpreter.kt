@@ -628,7 +628,7 @@ open class JcInterpreter(
         }
     }
 
-    private fun createExprResolver(
+    protected open fun createExprResolver(
         ctx: JcContext,
         scope: JcStepScope,
         options: JcMachineOptions,
@@ -754,7 +754,8 @@ open class JcInterpreter(
         scope: JcStepScope,
     ): Unit = resolveVirtualInvoke(ctx, methodCall, scope, typeSelector, options.forkOnRemainingTypes)
 
-    private val approximationResolver = JcMethodApproximationResolver(ctx, applicationGraph, options)
+    protected open val approximationResolver: JcMethodApproximationResolver =
+        JcMethodApproximationResolver(ctx, applicationGraph)
 
     private fun approximateMethod(scope: JcStepScope, methodCall: JcMethodCall): Boolean {
         val exprResolver = exprResolverWithScope(scope)
