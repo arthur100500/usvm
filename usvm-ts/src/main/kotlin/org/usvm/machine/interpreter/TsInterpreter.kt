@@ -366,12 +366,10 @@ class TsInterpreter(
                 val array = scope.calcOnState {
                     // In a common case we cannot determine the type of the array
                     val type = EtsArrayType(EtsUnknownType, dimensions = 1)
-                    val descriptor = ctx.arrayDescriptorOf(type)
-
-                    val address = memory.allocConcrete(descriptor)
+                    val address = memory.allocConcrete(type)
                     memory.initializeArray(
                         arrayHeapRef = address,
-                        type = descriptor,
+                        type = ctx.arrayDescriptorOf(type),
                         sort = ctx.addressSort,
                         sizeSort = ctx.sizeSort,
                         contents = content.asSequence(),
