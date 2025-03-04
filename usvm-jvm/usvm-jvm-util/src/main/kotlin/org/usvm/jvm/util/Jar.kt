@@ -1,4 +1,4 @@
-package org.usvm.instrumentation.util
+package org.usvm.jvm.util
 
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.ext.isSubClassOf
@@ -7,7 +7,11 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Label
 import org.objectweb.asm.commons.JSRInlinerAdapter
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FrameNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.TryCatchBlockNode
 import org.objectweb.asm.util.CheckClassAdapter
 import java.io.BufferedInputStream
 import java.io.File

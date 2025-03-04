@@ -192,6 +192,7 @@ val kotlin.reflect.KFunction<*>.javaName: String
 class JcCpWithoutApproximations(val cp: JcClasspath) : JcClasspath by cp {
     init {
         check(cp !is JcCpWithoutApproximations)
+        // TODO: try to set via reflection new featureChain
     }
 
     override val features: List<JcClasspathFeature> by lazy {
@@ -254,7 +255,10 @@ class JcCpWithoutApproximations(val cp: JcClasspath) : JcClasspath by cp {
     val JcField.isOriginalField: Boolean get() = withoutApproximations != null
 }
 
+// TODO: remove global cache someday #Valya
+private val cpWithoutApproximationsCache = HashMap<JcClasspath, JcCpWithoutApproximations>()
+
 fun JcClasspath.cpWithoutApproximations(): JcCpWithoutApproximations {
     if (this is JcCpWithoutApproximations) return this
-    return JcCpWithoutApproximations(this)
+    return cpWithoutApproximationsCache.getOrPut(this) { JcCpWithoutApproximations(this) }
 }
