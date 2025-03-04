@@ -161,6 +161,9 @@ class SpringReqDSLBuilder private constructor(
         private const val MOCK_MVC_REQUEST_BUILDERS_CP =
             "org.springframework.test.web.servlet.request.MockMvcRequestBuilders"
 
+        private const val MOCK_HTTP_SERVLET_REQUEST_BUILDER_CP =
+            "org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder"
+
         private fun commonReqDSLBuilder(
             type: String,
             ctx: JcContext,
@@ -185,13 +188,13 @@ class SpringReqDSLBuilder private constructor(
     fun getDSL() = reqDSL
 
     fun addParam(attr: ParamAttr): SpringReqDSLBuilder {
-        val method = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, "param").method
+        val method = ctx.cp.findJcMethod(MOCK_HTTP_SERVLET_REQUEST_BUILDER_CP, "param").method
         addStrArrOfStrCallDSL(method, attr.name, attr.values)
         return this
     }
 
     fun addHeader(attr: HeaderAttr): SpringReqDSLBuilder {
-        val method = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, "header").method
+        val method = ctx.cp.findJcMethod(MOCK_HTTP_SERVLET_REQUEST_BUILDER_CP, "header").method
         addStrArrOfStrCallDSL(method, attr.name, attr.values)
         return this
     }
@@ -424,7 +427,7 @@ class JcSpringTest private constructor(
 
         private fun getGeneratedClassName(cp: JcClasspath): JcClassType {
             // TODO hardcoded
-            val cl = cp.findClassOrNull("org.springframework.samples.petclinic.StartSpringTestClass") //TODO: get it from state? (it is generated in runtime)
+            val cl = cp.findClassOrNull("org.usvm.spring.benchmarks.StartSpringTestClass") //TODO: get it from state? (it is generated in runtime)
             check(cl != null)
             return cl!!.toType()
         }

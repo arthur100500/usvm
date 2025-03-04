@@ -9,6 +9,7 @@ import kotlin.io.path.exists
 plugins {
     id("usvm.kotlin-conventions")
     id("org.springframework.boot") version "3.2.0"
+    id("io.spring.dependency-management") version "1.1.4"
 }
 
 val samples by sourceSets.creating {
@@ -198,8 +199,8 @@ publishing {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
-    implementation("org.springframework.boot:spring-boot-starter-test:3.3.4")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.2.0")
+    implementation("org.springframework.boot:spring-boot-starter-test:3.2.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
     implementation("org.apache.xmlbeans:xmlbeans:5.2.1")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf:3.3.4")
@@ -211,8 +212,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
 
-    environment("usvm-jvm-instrumentation-jar", "/home/kogora/AdiskD/PROG_SPBGU_HW/PROG_SPBU_3/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
-    environment("usvm-jvm-collectors-jar", "/home/kogora/AdiskD/PROG_SPBGU_HW/PROG_SPBU_3/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
+    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
+    environment("usvm-jvm-collectors-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
     val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
     val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
     val springApproximationDepsJarPath = springApproximationsDeps.resolvedConfiguration.files

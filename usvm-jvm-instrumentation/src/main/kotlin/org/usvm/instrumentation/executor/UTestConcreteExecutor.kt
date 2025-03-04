@@ -62,7 +62,7 @@ class UTestConcreteExecutor(
             try {
                 instrumentationProcessRunner.init(lifetime)
             } catch (e: Throwable) {
-                println("Cant init rdProcess")
+                println("Cant init rdProcess ${e}")
             }
         }
         if (!instrumentationProcessRunner.isAlive()) {

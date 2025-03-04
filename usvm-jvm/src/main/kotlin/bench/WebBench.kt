@@ -102,9 +102,16 @@ private fun loadKlawBench(): BenchCp {
     }
 }
 
+private fun loadSynthBench(): BenchCp {
+    val benchDir = Path("C:/Users/arthur/Documents/usvm-spring-benchmarks/build/libs/BOOT-INF")
+    return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib").apply {
+        entrypointFilter = { it.enclosingClass.simpleName.startsWith("SpringBenchmarks") }
+    }
+}
+
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadWebPetClinicBench()
+        loadSynthBench()
     }
 
     logTime("Analysis ALL") {
@@ -307,7 +314,7 @@ private fun generateTestClass(benchmark: BenchCp): BenchCp {
                 }
             }?.packageName
             ?: throw IllegalArgumentException("No entry classes found (with SpringBootApplication annotation)")
-    val entryPackagePath = Path(webApplicationPackage.replace('.', '/'))
+    val entryPackagePath = webApplicationPackage.replace('.', '/')
 
     val testClassName = "StartSpringTestClass"
     val testClassFullName = "$entryPackagePath/$testClassName"
