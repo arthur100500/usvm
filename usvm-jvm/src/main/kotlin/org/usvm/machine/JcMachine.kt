@@ -50,7 +50,7 @@ val logger = object : KLogging() {}.logger
 open class JcMachine(
     cp: JcClasspath,
     private val options: UMachineOptions,
-    private val jcMachineOptions: JcMachineOptions = JcMachineOptions(),
+    val jcMachineOptions: JcMachineOptions = JcMachineOptions(),
     private val interpreterObserver: JcInterpreterObserver? = null,
 ) : UMachine<JcState>() {
     private val applicationGraph = JcApplicationGraph(cp)

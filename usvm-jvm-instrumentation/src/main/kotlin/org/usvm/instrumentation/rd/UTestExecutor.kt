@@ -138,11 +138,7 @@ abstract class UTestExecutor(
         classLoader = workerClassLoader
     )
 
-    init {
-        workerClassLoader.setStaticDescriptorsBuilder(staticDescriptorsBuilder)
-    }
-
-    protected fun reset() {
+    protected open fun reset() {
         initStateDescriptorBuilder = Value2DescriptorConverter(
             workerClassLoader = workerClassLoader,
             previousState = null

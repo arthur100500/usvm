@@ -11,7 +11,7 @@ object InstrumentationModuleConstants {
     //Timeout for method execution
     val methodExecutionTimeout = 100000.seconds
     //Timeout for executor process waiting (should be in seconds)
-    const val concreteExecutorProcessTimeout = 120
+    const val concreteExecutorProcessTimeout = 1000000
     //If something gone wrong with RD
     const val triesToRecreateExecutorRdProcess = 3
     //Rollback strategy

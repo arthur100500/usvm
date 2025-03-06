@@ -23,10 +23,15 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
     private val exec: UTestConcreteExecutor
 
     init {
+        // TODO: Find better way to get deps without unprivating jcMachineOptions #AA
+        val options = machine.jcMachineOptions
+        check(options.projectLocations != null && options.dependenciesLocations != null)
+        val reproducingLocations = System.getenv("usvm.jvm.testReproducingDeps.paths").split(";")
+        val locations = (options.projectLocations + options.dependenciesLocations).map { it.path } + reproducingLocations
         val opt = UTestExecutionOptions(execMode= InstrumentedProcess.UTestExecMode.RESULT_ONLY)
         exec = UTestConcreteExecutor(
             instrumentationClassFactory = JcRuntimeTraceInstrumenterFactory::class,
-            testingProjectClasspath = cp.locations.joinToString(File.pathSeparator) { it.path },
+            testingProjectClasspath = locations.joinToString(File.pathSeparator),
             jcClasspath = cp,
             timeout = Duration.INFINITE,
             opts = opt
@@ -44,7 +49,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
 
             // TODO: testIsValidAndMayBeRendered
 
-            val res = exec.executeSync(testDsl)
+             val res = exec.executeSync(testDsl)
             println(res)
 
             JcSpringTestRenderManager().render(

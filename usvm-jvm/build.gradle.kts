@@ -8,8 +8,6 @@ import kotlin.io.path.exists
 
 plugins {
     id("usvm.kotlin-conventions")
-    id("org.springframework.boot") version "3.2.0"
-    id("io.spring.dependency-management") version "1.1.4"
 }
 
 val samples by sourceSets.creating {
@@ -94,6 +92,20 @@ dependencies {
 
     testImplementation(project(":usvm-jvm-instrumentation"))
 }
+
+val testReproducingDeps by configurations.creating
+
+dependencies {
+    testReproducingDeps("org.springframework.boot:spring-boot-starter-test:${Versions.bootStarterTest}")
+    testReproducingDeps("org.slf4j:slf4j-api:${Versions.Samples.slf4j}")
+//    testReproducingDeps("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.0")
+//    testReproducingDeps("org.jetbrains.xodus:xodus-utils:2.0.1")
+//    testReproducingDeps("org.jetbrains.xodus:xodus-entity-store:2.0.1")
+//    testReproducingDeps("org.jetbrains.xodus:xodus-environment:2.0.1")
+//    testReproducingDeps(Libs.jacodb_api_jvm)
+//    testReproducingDeps(Libs.jacodb_approximations)
+}
+
 
 val `sample-approximationsCompileOnly`: Configuration by configurations.getting
 
@@ -199,11 +211,7 @@ publishing {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web:3.2.0")
-    implementation("org.springframework.boot:spring-boot-starter-test:3.2.0")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
     implementation("org.apache.xmlbeans:xmlbeans:5.2.1")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf:3.3.4")
 }
 
 tasks.register<JavaExec>("runWebBench") {
@@ -221,6 +229,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     // TODO: norm? #CM #Valya
     systemProperty("usvm.jvm.springApproximationsDeps.paths", absolutePaths)
+    val testReproducingDepsPaths = testReproducingDeps.resolvedConfiguration.files.joinToString(";") { it.absolutePath }
+    environment("usvm.jvm.testReproducingDeps.paths", testReproducingDepsPaths)
     val currentDir = Path(System.getProperty("user.dir"))
     val generatedDir = currentDir.resolve("generated")
     generatedDir.createDirectories()
