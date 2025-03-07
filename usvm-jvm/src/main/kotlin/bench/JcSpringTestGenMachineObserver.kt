@@ -16,6 +16,7 @@ import org.usvm.statistics.UMachineObserver
 import org.usvm.instrumentation.executor.UTestConcreteExecutor
 import org.usvm.instrumentation.executor.UTestExecutionOptions
 import org.usvm.instrumentation.instrumentation.JcRuntimeTraceInstrumenterFactory
+import org.usvm.instrumentation.instrumentation.NoInstrumentationFactory
 import org.usvm.instrumentation.rd.InstrumentedProcess
 
 class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: JcClasspath) :
@@ -30,7 +31,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
         val locations = (options.projectLocations + options.dependenciesLocations).map { it.path } + reproducingLocations
         val opt = UTestExecutionOptions(execMode= InstrumentedProcess.UTestExecMode.RESULT_ONLY)
         exec = UTestConcreteExecutor(
-            instrumentationClassFactory = JcRuntimeTraceInstrumenterFactory::class,
+            instrumentationClassFactory = NoInstrumentationFactory::class,
             testingProjectClasspath = locations.joinToString(File.pathSeparator),
             jcClasspath = cp,
             timeout = Duration.INFINITE,
@@ -49,7 +50,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
 
             // TODO: testIsValidAndMayBeRendered
 
-             val res = exec.executeSync(testDsl)
+            val res = exec.executeSync(testDsl)
             println(res)
 
             JcSpringTestRenderManager().render(

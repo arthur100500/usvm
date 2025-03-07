@@ -220,8 +220,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
 
-    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
-    environment("usvm-jvm-collectors-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
+    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
+    environment("usvm-jvm-collectors-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
     val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
     val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
     val springApproximationDepsJarPath = springApproximationsDeps.resolvedConfiguration.files
