@@ -166,10 +166,19 @@ class SpringReqDSLBuilder private constructor(
         ): SpringReqDSLBuilder {
             val staticMethod = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, type).method
             val initDSL = mutableListOf<UTestInst>()
+            val pathArgs = pathVariables.map { it.toString() }
+            val pathArgsArray = UTestCreateArrayExpression(ctx.stringType, UTestIntExpression(pathArgs.size, ctx.cp.int))
+            val pathArgsInitializer = List(pathArgs.size) {
+                UTestArraySetStatement(
+                    pathArgsArray,
+                    UTestIntExpression(it, ctx.cp.int),
+                    UTestStringExpression(pathArgs[it], ctx.stringType)
+                )
+            }
+            initDSL.addAll(listOf(pathArgsArray) + pathArgsInitializer)
             val argsDSL = mutableListOf<UTestExpression>()
             argsDSL.add(UTestStringExpression(path, ctx.stringType))
-            argsDSL.addAll(pathVariables.map { UTestStringExpression(it.toString(), ctx.stringType) })
-
+            argsDSL.add(pathArgsArray)
             return SpringReqDSLBuilder(
                 initStatements = initDSL,
                 reqDSL = UTestStaticMethodCall(staticMethod, argsDSL),
