@@ -4,7 +4,7 @@ import java.io.File
 import kotlin.time.Duration
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcClasspath
-import org.usvm.api.JcSpringTest
+import org.usvm.api.spring.JcSpringTest
 import org.usvm.jvm.rendering.JcSpringTestKind
 import org.usvm.jvm.rendering.JcSpringTestMeta
 import org.usvm.jvm.rendering.JcSpringTestRenderManager
@@ -15,7 +15,6 @@ import org.usvm.statistics.UMachineObserver
 
 import org.usvm.instrumentation.executor.UTestConcreteExecutor
 import org.usvm.instrumentation.executor.UTestExecutionOptions
-import org.usvm.instrumentation.instrumentation.JcRuntimeTraceInstrumenterFactory
 import org.usvm.instrumentation.instrumentation.NoInstrumentationFactory
 import org.usvm.instrumentation.rd.InstrumentedProcess
 
@@ -29,7 +28,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
         check(options.projectLocations != null && options.dependenciesLocations != null)
         val reproducingLocations = System.getenv("usvm.jvm.testReproducingDeps.paths").split(";")
         val locations = (options.projectLocations + options.dependenciesLocations).map { it.path } + reproducingLocations
-        val opt = UTestExecutionOptions(execMode= InstrumentedProcess.UTestExecMode.RESULT_ONLY)
+        val opt = UTestExecutionOptions(execMode = InstrumentedProcess.UTestExecMode.RESULT_ONLY)
         exec = UTestConcreteExecutor(
             instrumentationClassFactory = NoInstrumentationFactory::class,
             testingProjectClasspath = locations.joinToString(File.pathSeparator),

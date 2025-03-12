@@ -7,8 +7,8 @@ import org.usvm.PathNode
 import org.usvm.UCallStack
 import org.usvm.UExpr
 import org.usvm.USort
-import org.usvm.api.JcSpringTest
-import org.usvm.api.SpringReqSettings
+import org.usvm.api.spring.JcSpringTest
+import org.usvm.api.spring.SpringReqSettings
 import org.usvm.api.targets.JcTarget
 import org.usvm.collections.immutable.internal.MutabilityOwnership
 import org.usvm.constraints.UPathConstraints

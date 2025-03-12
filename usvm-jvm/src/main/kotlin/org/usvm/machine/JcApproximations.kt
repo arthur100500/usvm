@@ -72,7 +72,7 @@ import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapMergeInto
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapPut
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapRemove
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapSize
-import org.usvm.api.SpringReqSettings
+import org.usvm.api.spring.SpringReqSettings
 import org.usvm.api.initializeArray
 import org.usvm.api.initializeArrayLength
 import org.usvm.api.makeNullableSymbolicRef
@@ -523,7 +523,7 @@ class JcMethodApproximationResolver(
 
         if (method.name.equals("_saveResSave")) {
             scope.doWithState {
-                (this as JcSpringState).res = methodCall.arguments[0].asExpr(ctx.integerSort)
+                (this as JcSpringState).res = methodCall.arguments[0].asExpr(ctx.addressSort)
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
             }
             return true
@@ -667,7 +667,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/simple/increment_from_header"
+        return path != "/body/graph"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {

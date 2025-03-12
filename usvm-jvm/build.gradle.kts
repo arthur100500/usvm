@@ -50,6 +50,11 @@ dependencies {
     implementation(project(":usvm-jvm:usvm-jvm-util"))
     implementation(project(":usvm-jvm:usvm-jvm-reproducer"))
 
+    implementation("org.springframework.boot:spring-boot-starter-test:3.2.0")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.2.0")
+    implementation("org.springframework:spring-jcl:6.1.1")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.0")
+
     implementation(Libs.ksmt_runner)
     implementation(Libs.ksmt_yices)
     implementation(Libs.ksmt_cvc5)
@@ -97,13 +102,6 @@ val testReproducingDeps by configurations.creating
 
 dependencies {
     testReproducingDeps("org.springframework.boot:spring-boot-starter-test:${Versions.bootStarterTest}")
-    testReproducingDeps("org.slf4j:slf4j-api:${Versions.Samples.slf4j}")
-//    testReproducingDeps("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.0")
-//    testReproducingDeps("org.jetbrains.xodus:xodus-utils:2.0.1")
-//    testReproducingDeps("org.jetbrains.xodus:xodus-entity-store:2.0.1")
-//    testReproducingDeps("org.jetbrains.xodus:xodus-environment:2.0.1")
-//    testReproducingDeps(Libs.jacodb_api_jvm)
-//    testReproducingDeps(Libs.jacodb_approximations)
 }
 
 
@@ -220,8 +218,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
 
-    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
-    environment("usvm-jvm-collectors-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
+    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
+    environment("usvm-jvm-collectors-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
     val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
     val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
     val springApproximationDepsJarPath = springApproximationsDeps.resolvedConfiguration.files
