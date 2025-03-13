@@ -7,7 +7,7 @@ import org.usvm.PathNode
 import org.usvm.UCallStack
 import org.usvm.UExpr
 import org.usvm.USort
-import org.usvm.api.JcSpringTest
+import org.usvm.api.spring.JcSpringTest
 import org.usvm.api.targets.JcTarget
 import org.usvm.collections.immutable.internal.MutabilityOwnership
 import org.usvm.constraints.UPathConstraints
@@ -91,6 +91,14 @@ class JcSpringState(
 
     fun getPinnedValuesOfSource(source: JcSpringPinnedValueSource) : Map<JcSpringPinnedValueKey, JcSpringPinnedValue> {
         return pinnedValues.getValuesOfSource(source)
+    }
+
+    fun hasEnoughInfoForTest(): Boolean {
+        return pinnedValues.getValue(JcSpringPinnedValueKey.requestPath()) != null
+    }
+
+    fun getResult(): UExpr<out USort>? {
+        return pinnedValues.getValue(JcSpringPinnedValueKey.response())?.getExpr()
     }
 
     override fun clone(newConstraints: UPathConstraints<JcType>?): JcSpringState {

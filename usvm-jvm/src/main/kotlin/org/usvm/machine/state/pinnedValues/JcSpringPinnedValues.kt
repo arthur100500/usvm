@@ -13,7 +13,7 @@ class JcSpringPinnedValues (
     private var pinnedValues: Map<JcSpringPinnedValueKey, JcSpringPinnedValue> = emptyMap()
 ){
     fun getValue(key: JcSpringPinnedValueKey): JcSpringPinnedValue? {
-        return pinnedValues.get(key)
+        return pinnedValues[key]
     }
 
     fun setValue(key: JcSpringPinnedValueKey, value: JcSpringPinnedValue) {

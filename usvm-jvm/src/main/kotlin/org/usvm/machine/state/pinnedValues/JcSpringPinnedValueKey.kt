@@ -12,6 +12,9 @@ class JcSpringPinnedValueKey(
         fun ofSource(source: JcSpringPinnedValueSource, name: String? = null): JcSpringPinnedValueKey = JcSpringPinnedValueKey(source, name, source.caseSensitive())
         fun requestHasBody(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_HAS_BODY)
         fun requestAttribute(name: String): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_ATTRIBUTE, name)
+        fun requestPath(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_PATH)
+        fun requestMethod(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_METHOD)
+        fun response(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.RESPONSE)
     }
 
     override fun hashCode(): Int { 
@@ -27,7 +30,7 @@ class JcSpringPinnedValueKey(
 
         if (source != other.source) return false
         if (ignoreCase != other.ignoreCase) return false
-        if (name.equals(other.name, ignoreCase)) return false
+        if (!name.equals(other.name, ignoreCase)) return false
 
         return true
     }
@@ -38,6 +41,12 @@ class JcSpringPinnedValueKey(
 
     fun getName(): String? {
         return name
+    }
+
+    override fun toString(): String {
+        val namePostfix = if (name == null) "" else
+            if (ignoreCase) "(${name.uppercase()})" else "($name)"
+        return "${source.name} $namePostfix"
     }
 
 }

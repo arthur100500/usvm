@@ -2,7 +2,7 @@ package bench
 
 import kotlinx.coroutines.runBlocking
 import org.jacodb.api.jvm.JcClasspath
-import org.usvm.api.JcSpringTest
+import org.usvm.api.spring.JcSpringTest
 import org.usvm.jvm.rendering.JcSpringTestKind
 import org.usvm.jvm.rendering.JcSpringTestMeta
 import org.usvm.jvm.rendering.JcSpringTestRenderManager
@@ -38,12 +38,11 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
             opts = opt
         )
         runBlocking { exec.ensureRunnerAlive() }
-        print("hehre")
     }
 
     override fun onStateTerminated(state: JcSpringState, stateReachable: Boolean) {
         state.callStack.push(state.entrypoint, state.entrypoint.instList[0])
-        if (!stateReachable || state.requestPath == null || state.requestMethod == null) return
+        if (!stateReachable || !state.hasEnoughInfoForTest()) return
         try {
             val test = JcSpringTest.generateFromState(state)
             val testDsl = test.generateTestDSL()
@@ -57,8 +56,8 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
                 state.entrypoint.enclosingClass.classpath,
                 listOf(
                     UTestRenderWrapper(
-                        test.generateTestDSL(),
-                        JcSpringTestMeta(test.generatedTestClass, test.reqPath.path, JcSpringTestKind.WebMVC)
+                        testDsl,
+                        JcSpringTestMeta(test.generatedTestClass, test.getPath(), JcSpringTestKind.WebMVC)
                     )
                 )
             )

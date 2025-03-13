@@ -74,8 +74,8 @@ val springApproximationsDeps by configurations.creating
 dependencies {
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-test:3.2.0")
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-web:3.2.0")
-    springApproximationsDeps("org.springframework.boot:spring-boot-starter-security:3.3.4")
-    springApproximationsDeps("org.springframework.security:spring-security-test:6.2.0")
+    // springApproximationsDeps("org.springframework.boot:spring-boot-starter-security:3.3.4")
+    // springApproximationsDeps("org.springframework.security:spring-security-test:6.2.0")
     springApproximationsDeps("org.springframework:spring-jcl:6.1.1")
     springApproximationsDeps("org.springframework.boot:spring-boot-starter-data-jpa:3.2.0")
 }
@@ -222,8 +222,8 @@ tasks.register<JavaExec>("runWebBench") {
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
 
-    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
-    environment("usvm-jvm-collectors-jar", "C:/Users/arthu/Documents/usvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
+    environment("usvm-jvm-instrumentation-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-runner.jar")
+    environment("usvm-jvm-collectors-jar", "C:/Users/arthur/Documents/ausvm/usvm-jvm-instrumentation/build/libs/usvm-jvm-instrumentation-collectors.jar")
     val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
     val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
     val springApproximationDepsJarPath = springApproximationsDeps.resolvedConfiguration.files

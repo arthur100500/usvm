@@ -4,7 +4,7 @@ import bench.JcSpringTestGenMachineObserver
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.usvm.UMachineOptions
-import org.usvm.api.JcSpringTest
+import org.usvm.api.spring.JcSpringTest
 import org.usvm.api.targets.JcTarget
 import org.usvm.machine.state.JcSpringState
 import org.usvm.machine.state.JcState
