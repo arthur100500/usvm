@@ -1,13 +1,12 @@
 ﻿package org.usvm.api.spring
 
-import com.jetbrains.rd.util.firstOrNull
-import org.jacodb.api.jvm.JcType
-import org.usvm.UExpr
-import org.usvm.USort
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
-import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey
+import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestBody
+import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestMethod
+import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestPath
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValues
+import java.util.Enumeration
 
 interface JcSpringRequest {
     fun getCookies(): List<JcSpringHttpCookie>
@@ -20,32 +19,39 @@ interface JcSpringRequest {
 }
 
 class JcSpringRealRequest(private val request: Any) : JcSpringRequest {
+    val requestClass = request.javaClass
     init {
-        check(request.javaClass.name.endsWith("MockHttpServletRequest"))
+        check(requestClass.name.endsWith("MockHttpServletRequest"))
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> getFromMethod(methodName: String, parameterTypes: Array<Class<*>> = arrayOf(), arguments: Array<Any> = arrayOf()): T {
+        return requestClass.getMethod(methodName, *parameterTypes).invoke(request, *arguments) as T
     }
 
     override fun getCookies(): List<JcSpringHttpCookie> {
-        TODO("Not yet implemented")
+        val rawCookies = getFromMethod("getCookies") as Array<Any>? ?: arrayOf()
+        return rawCookies.map { JcSpringHttpCookie.ofCookieObject(it) }
+    }
+
+    private fun getHeader(name: String): Enumeration<String> {
+        return getFromMethod("getHeaders", arrayOf(String::class.java), arrayOf(name))
     }
 
     override fun getHeaders(): List<JcSpringHttpHeader> {
-        TODO("Not yet implemented")
+        val headersNames = getFromMethod("getHeaderNames") as Enumeration<String>
+        return headersNames.toList().map { JcSpringHttpHeader(it, getHeader(it).toList()) }
     }
 
-    override fun getMethod(): JcSpringRequestMethod {
-        TODO("Not yet implemented")
-    }
+    override fun getMethod(): JcSpringRequestMethod = JcSpringRequestMethod.valueOf(getFromMethod("getMethod"))
 
-    override fun getPath(): String {
-        TODO("Not yet implemented")
-    }
+    override fun getPath(): String = getFromMethod("getPathInfo")
 
-    override fun getContentAsString(): String {
-        TODO("Not yet implemented")
-    }
+    override fun getContentAsString(): String = getFromMethod("getContentAsString")
 
     override fun getParameters(): List<JcSpringHttpParameter> {
-        TODO("Not yet implemented")
+        val parameterMap = getFromMethod("getParameterMap") as Map<String, Array<String>>
+        return parameterMap.map { JcSpringHttpParameter(it.key, it.value.toList())}
     }
 
     override fun getUriVariables(): List<Any?> {
@@ -79,7 +85,6 @@ class JcSpringPinnedValuesRequest(
         }.also { assert(it.size == uriVariables.size) }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun handleStringMultiValue(possibleMultiValue: Any?): List<String>? {
         if (possibleMultiValue == null) return null
         // TODO: Check return types and adjust this accordingly #AA
@@ -87,7 +92,8 @@ class JcSpringPinnedValuesRequest(
     }
 
     override fun getCookies(): List<JcSpringHttpCookie> {
-        TODO("Not yet implemented")
+        val cookies = collectAndConcretize(JcSpringPinnedValueSource.REQUEST_COOKIE)
+        return cookies.mapNotNull { (key, value) -> JcSpringHttpCookie(key, value as String) }
     }
 
     override fun getHeaders(): List<JcSpringHttpHeader> {
@@ -96,19 +102,20 @@ class JcSpringPinnedValuesRequest(
     }
 
     override fun getMethod(): JcSpringRequestMethod {
-        val method = pinnedValues.getValue(JcSpringPinnedValueKey.requestMethod())?.let { concretize(it) }
+        val method = pinnedValues.getValue(requestMethod())?.let { concretize(it) }
         check(method != null && method is String)
         return JcSpringRequestMethod.valueOf(method.uppercase())
     }
 
     override fun getPath(): String {
-        val path = pinnedValues.getValue(JcSpringPinnedValueKey.requestPath())?.let { concretize(it) }
+        val path = pinnedValues.getValue(requestPath())?.let { concretize(it) }
         check(path != null && path is String)
         return path
     }
 
     override fun getContentAsString(): String {
-        TODO("Not yet implemented")
+        val body = pinnedValues.getValue(requestBody())?.let(concretize) ?: ""
+        return body as String
     }
 
     override fun getParameters(): List<JcSpringHttpParameter> {

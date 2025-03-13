@@ -1,5 +1,7 @@
 package org.usvm.api.spring
 
+import jakarta.servlet.ServletContext
+import jakarta.servlet.http.Cookie
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcType
@@ -13,6 +15,8 @@ import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.objectType
+import org.springframework.mock.web.MockServletContext
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.usvm.UExpr
 import org.usvm.USort
 import org.usvm.api.util.JcTestStateResolver.ResolveMode
@@ -27,6 +31,7 @@ import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestInst
 import org.usvm.test.api.UTestIntExpression
 import org.usvm.test.api.UTestStringExpression
+import java.nio.charset.Charset
 
 
 fun JcClasspath.findJcMethod(cName: String, mName: String): JcTypedMethod {
@@ -131,8 +136,19 @@ class JcSpringTest private constructor(
         }
 
         private fun getSpringRequest(state: JcSpringState): JcSpringRequest {
-            val requestConcretizer = { value: JcSpringPinnedValue -> concretizeSimple(REQUEST_MOD, state, value.getExpr(), value.getType()) }
-            return JcSpringPinnedValuesRequest(state.pinnedValues, requestConcretizer)
+            // TEST CODE, REAL IS BELOW
+            val fakeRequest = get("/some/path/{ohio}", 123)
+                .param("param1", "32").param("param2", "32", "12")
+                .header("header1", "ohio").header("header2", "hi", "hello")
+                .content("this is peak content")
+                .characterEncoding(Charset.defaultCharset())
+                .requestAttr("attrib1", "bruh needs support...")
+                .cookie(Cookie("cookie", "yippee"))
+                .queryParam("theweather", "outside", "is", "rizzy")
+                .buildRequest(MockServletContext())
+            return JcSpringRealRequest(fakeRequest)
+            // val requestConcretizer = { value: JcSpringPinnedValue -> concretizeSimple(REQUEST_MOD, state, value.getExpr(), value.getType()) }
+            // return JcSpringPinnedValuesRequest(state.pinnedValues, requestConcretizer)
         }
 
         private fun concretizeSimple(mode: ResolveMode, state: JcState, expr: UExpr<out USort>, type: JcType) =

@@ -50,6 +50,11 @@ dependencies {
     implementation(project(":usvm-jvm:usvm-jvm-util"))
     implementation(project(":usvm-jvm:usvm-jvm-reproducer"))
 
+    implementation("org.springframework.boot:spring-boot-starter-test:3.2.0")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.2.0")
+    implementation("org.springframework:spring-jcl:6.1.1")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.0")
+
     implementation(Libs.ksmt_runner)
     implementation(Libs.ksmt_yices)
     implementation(Libs.ksmt_cvc5)

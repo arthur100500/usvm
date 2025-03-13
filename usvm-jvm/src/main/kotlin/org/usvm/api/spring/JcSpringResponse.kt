@@ -19,10 +19,18 @@ class JcSpringResponse(private val response: Any) {
     }
 
     fun getStatusCode(): Int = getFromMethod("getStatus")
+
     fun getErrorMessage(): String = getFromMethod("getErrorMessage")
+
     fun getContentLength(): Int = getFromMethod("getContentLength")
-    fun getCookies(): Array<Any> = getFromMethod("getCookies")
+
+    fun getCookies(): List<JcSpringHttpCookie> {
+        val rawCookies = getFromMethod("getCookies") as Array<Any>? ?: arrayOf()
+        return rawCookies.map { JcSpringHttpCookie.ofCookieObject(it) }
+    }
+
     fun getContentAsString(): String = getFromMethod("getContentAsString")
+
     fun getHeaders(): List<JcSpringHttpHeader> {
         val headers = getFromField("headers") as Any
         val keys = headers.javaClass.getDeclaredMethod("keySet").invoke(headers) as Set<String>

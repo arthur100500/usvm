@@ -15,6 +15,7 @@ class JcSpringPinnedValueKey(
         fun requestPath(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_PATH)
         fun requestMethod(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_METHOD)
         fun response(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.RESPONSE)
+        fun requestBody(): JcSpringPinnedValueKey = ofSource(JcSpringPinnedValueSource.REQUEST_BODY)
     }
 
     override fun hashCode(): Int { 
