@@ -112,11 +112,11 @@ import org.usvm.types.single
 import java.util.ArrayList
 import java.util.TreeMap
 import org.usvm.machine.state.JcSpringState
-import org.usvm.machine.state.concreteMemory.*
 import org.usvm.machine.state.concreteMemory.allInstanceFields
 import org.usvm.machine.state.concreteMemory.classesOfLocations
 import org.usvm.machine.state.concreteMemory.isSpringController
 import org.usvm.machine.state.concreteMemory.javaName
+import org.usvm.machine.state.concreteMemory.toJcType
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 
@@ -627,7 +627,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return false
+        return path != "/simple/increment_from_header"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {

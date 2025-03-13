@@ -11,7 +11,7 @@ import org.usvm.machine.state.JcState
 import org.usvm.statistics.UMachineObserver
 
 class JcSpringMachine(
-    cp: JcClasspath,
+    private val cp: JcClasspath,
     options: UMachineOptions,
     jcMachineOptions: JcMachineOptions = JcMachineOptions(),
     interpreterObserver: JcInterpreterObserver? = null,
@@ -21,7 +21,7 @@ class JcSpringMachine(
     override fun JcState.toCorrespodingStateType(): JcSpringState = JcSpringState.defaultFromJcState(this)
     override fun analyze(method: JcMethod, targets: List<JcTarget>): List<JcSpringState> = analyze(
         listOf(method), targets, listOf(
-            JcSpringTestGenMachineObserver(this)
+            JcSpringTestGenMachineObserver(this, cp)
         )
     )
 

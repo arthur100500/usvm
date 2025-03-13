@@ -103,16 +103,16 @@ private fun loadKlawBench(): BenchCp {
     }
 }
 
-private fun loadSynthAuthBench(): BenchCp {
-    val synthAuthDir = Path("C:/Users/arthur/Documents/usvm-spring-auth-benchmarks/build/libs/BOOT-INF")
-    return loadWebAppBenchCp(synthAuthDir / "classes", synthAuthDir / "lib").apply {
-        entrypointFilter = { it.enclosingClass.simpleName.startsWith("WebGoatApplication") }
+private fun loadSynthBench(): BenchCp {
+    val benchDir = Path("C:/Users/arthur/Documents/usvm-spring-benchmarks/build/libs/BOOT-INF")
+    return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib").apply {
+        entrypointFilter = { it.enclosingClass.simpleName.startsWith("SpringBenchmarks") }
     }
 }
 
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadSynthAuthBench()
+        loadSynthBench()
     }
 
     logTime("Analysis ALL") {
