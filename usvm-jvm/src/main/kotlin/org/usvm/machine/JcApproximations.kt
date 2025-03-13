@@ -72,7 +72,6 @@ import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapMergeInto
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapPut
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapRemove
 import org.usvm.api.collection.ObjectMapCollectionApi.symbolicObjectMapSize
-import org.usvm.api.spring.SpringReqSettings
 import org.usvm.api.initializeArray
 import org.usvm.api.initializeArrayLength
 import org.usvm.api.makeNullableSymbolicRef
@@ -498,37 +497,6 @@ class JcMethodApproximationResolver(
             return true
         }
 
-        if (method.name.equals("_saveReqPath")) {
-            scope.doWithState {
-                // TODO: mb bug
-                (this as JcSpringState).reqSetup += Pair(
-                    SpringReqSettings.PATH,
-                    methodCall.arguments[0].asExpr(ctx.addressSort)
-                )
-                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
-            }
-            return true
-        }
-
-        if (method.name.equals("_saveReqKind")) {
-            scope.doWithState {
-                (this as JcSpringState).reqSetup += Pair(
-                    SpringReqSettings.KIND,
-                    methodCall.arguments[0].asExpr(ctx.addressSort)
-                )
-                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
-            }
-            return true
-        }
-
-        if (method.name.equals("_saveResSave")) {
-            scope.doWithState {
-                (this as JcSpringState).res = methodCall.arguments[0].asExpr(ctx.addressSort)
-                skipMethodInvocationWithValue(methodCall, ctx.voidValue)
-            }
-            return true
-        }
-
         if (method.name.equals("_classesWithFieldsValueAnnotation")) {
             scope.doWithState {
                 val types = ctx.classesOfLocations(options.projectLocations!!).filter {
@@ -667,7 +635,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/body/graph"
+        return path != "/simple/increment_from_param"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
@@ -850,7 +818,7 @@ class JcMethodApproximationResolver(
                 val prefix = getRequestMapPrefix(arguments[0].asExpr(ctx.addressSort))
                 val keyArgument = arguments[1].asExpr(ctx.addressSort) as UConcreteHeapRef
                 val key = memory.tryHeapRefToObject(keyArgument) as String?
-                val value = arguments[0].asExpr(ctx.addressSort)
+                val value = arguments[2].asExpr(ctx.addressSort)
 
                 if (key == null) {
                     println("Non-concrete request map keys are not supported")

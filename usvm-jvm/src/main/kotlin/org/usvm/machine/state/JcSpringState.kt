@@ -8,7 +8,6 @@ import org.usvm.UCallStack
 import org.usvm.UExpr
 import org.usvm.USort
 import org.usvm.api.spring.JcSpringTest
-import org.usvm.api.spring.SpringReqSettings
 import org.usvm.api.targets.JcTarget
 import org.usvm.collections.immutable.internal.MutabilityOwnership
 import org.usvm.constraints.UPathConstraints
@@ -31,8 +30,6 @@ class JcSpringState(
     methodResult: JcMethodResult = JcMethodResult.NoCall,
     targets: UTargetsSet<JcTarget, JcInst> = UTargetsSet.empty(),
     var userDefinedValues: Map<String, Pair<UExpr<out USort>, JcType>> = emptyMap(),
-    var reqSetup: Map<SpringReqSettings, UExpr<out USort>> = emptyMap(),
-    var res: UExpr<out USort>? = null,
     var resultConclusion: JcSpringTest? = null,
 ) : JcState(
     ctx,
@@ -67,6 +64,14 @@ class JcSpringState(
         return userDefinedValues[key]
     }
 
+    fun hasEnoughInfoForTest(): Boolean {
+        return userDefinedValues.containsKey("CONFIG_PATH")
+    }
+
+    fun getResult(): UExpr<out USort>? {
+        return userDefinedValues["CONFIG_RESPONSE"]?.first
+    }
+
     override fun clone(newConstraints: UPathConstraints<JcType>?): JcSpringState {
         val newThisOwnership = MutabilityOwnership()
         val cloneOwnership = MutabilityOwnership()
@@ -89,8 +94,6 @@ class JcSpringState(
             targets.clone(),
         )
         new.userDefinedValues = userDefinedValues
-        new.reqSetup = reqSetup
-        new.res = res
         new.resultConclusion =
             resultConclusion?.let { error("State cannot be cloned if resultConclusion was generated from it") }
         return new

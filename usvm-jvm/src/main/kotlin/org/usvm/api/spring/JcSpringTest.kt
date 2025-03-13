@@ -12,6 +12,7 @@ import org.jacodb.api.jvm.ext.findMethodOrNull
 import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.findType
+import org.jacodb.api.jvm.ext.objectType
 import org.usvm.UExpr
 import org.usvm.USort
 import org.usvm.api.util.JcTestStateResolver.ResolveMode
@@ -55,81 +56,27 @@ fun List<String>.toStringArrayDsl(ctx: JcContext): Pair<UTestCreateArrayExpressi
 
 // todo:(path for test pipeline) /owners/find
 
-interface SpringReqAttr
-
-data class ParamAttr(
-    val name: String,
-    val values: List<Any>,
-//    val valueType: JcClassOrInterface, TODO: mb use it to generate DSL or concretize? (but it need support from Arthur)
-) : SpringReqAttr
-
-data class HeaderAttr(
-    val name: String,
-    val values: List<Any>,
-//    val valueType: JcClassOrInterface, TODO: mb use it to generate DSL or concretize? (but it need support from Arthur)
-) : SpringReqAttr
-
 data class SpringReqPath(
     val path: String,
     val pathVariables: List<Any>
 )
-
-enum class SpringReqKind {
-    GET,
-    PUT,
-    POST,
-    PATCH,
-    DELETE;
-
-    override fun toString(): String {
-        return when (this) {
-            GET -> "get"
-            PUT -> "put"
-            POST -> "post"
-            PATCH -> "patch"
-            DELETE -> "delete"
-        }
-    }
-
-    companion object {
-        fun fromString(str: String): SpringReqKind =
-            when (str) {
-                GET.toString() -> GET
-                PUT.toString() -> PUT
-                POST.toString() -> POST
-                PATCH.toString() -> PATCH
-                DELETE.toString() -> DELETE
-                else -> throw IllegalArgumentException("Unsupported kind: $str")
-            }
-    }
-
-}
-
-enum class SpringReqSettings {
-    PATH,
-    KIND,
-}
 
 class SpringExn
 
 class JcSpringTest private constructor(
     val ctx: JcContext,
     val generatedTestClass: JcClassType,
-    /* Request information */
-    val reqAttrs: List<SpringReqAttr>,
-    val reqKind: SpringReqKind,
-    val reqPath: SpringReqPath,
-    /* Response information */
+    private val request: JcSpringRequest,
     private val response: JcSpringResponse?,
     private val exception: SpringExn?,
 //    todo: exn
 ) {
     companion object {
-        val REQUEST_MOD = ResolveMode.MODEL
-        val RESPONSE_MOD = ResolveMode.CURRENT
+        private val REQUEST_MOD = ResolveMode.MODEL
+        private val RESPONSE_MOD = ResolveMode.CURRENT
 
         fun generateFromState(state: JcSpringState): JcSpringTest =
-            if (state.res != null)
+            if (state.getResult() != null)
                 generateResponseTest(state)
             else
                 generateExnTest(state)
@@ -137,9 +84,7 @@ class JcSpringTest private constructor(
         private fun generateResponseTest(state: JcSpringState): JcSpringTest = JcSpringTest(
             state.ctx,
             getGeneratedClassName(state.ctx.cp),
-            getReqAttrs(state),
-            getReqKind(state),
-            getReqPath(state),
+            request = getSpringRequest(state),
             response = getSpringResponse(state.ctx.cp, state),
             exception = null
         )
@@ -147,9 +92,7 @@ class JcSpringTest private constructor(
         private fun generateExnTest(state: JcSpringState): JcSpringTest = JcSpringTest(
             state.ctx,
             getGeneratedClassName(state.ctx.cp),
-            getReqAttrs(state),
-            getReqKind(state),
-            getReqPath(state),
+            request = getSpringRequest(state),
             response = null,
             exception = getSpringExn(),
         )
@@ -162,94 +105,14 @@ class JcSpringTest private constructor(
             // TODO hardcoded
             val cl = cp.findClassOrNull("org.usvm.spring.benchmarks.StartSpringTestClass") //TODO: get it from state? (it is generated in runtime)
             check(cl != null)
-            return cl!!.toType()
-        }
-
-        private fun getReqKind(state: JcSpringState): SpringReqKind {
-            val expr = state.reqSetup[SpringReqSettings.KIND] ?: throw IllegalArgumentException("No path found")
-            val type = state.ctx.stringType as JcClassType
-            val kind = concretizeSimple(REQUEST_MOD, state, expr, type)
-            assert(kind != null)
-
-            return SpringReqKind.fromString(kind as String)
-        }
-
-        private fun getReqPath(state: JcSpringState): SpringReqPath {
-            fun sortReqParam(path: String, params: Map<String, Any>): List<Any> {
-//                TODO: check it
-                val paramNames = Regex("\\{([^}]*)}").findAll(path)
-                    .map { it.groupValues[1] }
-                    .toList()
-
-                return paramNames.map {
-                    params.getValue(it)
-                }.also { check(it.size == params.size) }
-            }
-
-            val expr = state.reqSetup[SpringReqSettings.PATH] ?: throw IllegalArgumentException("No path found")
-            val type = state.ctx.stringType as JcClassType
-            val path = concretizeSimple(REQUEST_MOD, state, expr, type)
-            assert(path != null)
-
-            val concreteReqParams = mutableMapOf<String, Any>().also { map ->
-                state.userDefinedValues.forEach { (key, value) ->
-                    if (key.contains("PATH_*".toRegex())) {
-                        val name = key.split("_").also { it.subList(1, it.size) }.joinToString("_")
-                        concretizeSimple(REQUEST_MOD, state, value.first, value.second).also {
-                            assert(it != null) //TODO: is it correct? (param have name? but == null)
-                            map[name] = it!!
-                        }
-                    }
-                }
-            }
-
-            return SpringReqPath(
-                path = path!! as String,
-                pathVariables = sortReqParam(path as String, concreteReqParams)
-            )
-        }
-
-        private fun getReqAttrs(state: JcSpringState): MutableList<SpringReqAttr> {
-            fun concretize(expr: UExpr<out USort>, type: JcType) =
-                concretizeAsList(REQUEST_MOD, state, expr, type)
-
-            fun getHeaderAttr(name: String, expr: UExpr<out USort>, type: JcType) = concretize(expr, type)?.let {
-                HeaderAttr(
-                    name = name,
-                    values = it
-                )
-            }
-
-            fun getParamAttr(name: String, expr: UExpr<out USort>, type: JcType) = concretize(expr, type)?.let {
-                ParamAttr(
-                    name = name,
-                    values = it
-                )
-            }
-
-            return mutableListOf<SpringReqAttr>().also { list ->
-                state.userDefinedValues.forEach { (key, value) ->
-                    //TODO: (MCHK): null -> no attr
-                    when {
-                        key.contains("PARAM_*".toRegex()) -> {
-                            val name = key.split("_").let { it.subList(1, it.size) }.joinToString("_")
-                            getHeaderAttr(name, value.first, value.second)
-                        }
-
-                        key.contains("HEADER_*".toRegex()) -> {
-                            val name = key.split("_").let { it.subList(1, it.size) }.joinToString("_")
-                            getParamAttr(name, value.first, value.second)
-                        }
-
-                        else -> null
-                    }?.also { list.add(it) }
-                }
-            }
+            return cl.toType()
         }
 
         private fun getSpringResponse(cp: JcClasspath, state: JcSpringState): JcSpringResponse {
-            assert(state.res != null)
-            val expr = state.res ?: throw IllegalArgumentException("No Response")
+            // Will be refactored with common refactor merge!!
+            val result = state.getResult()
+            assert(result != null)
+            val expr = result ?: throw IllegalArgumentException("No Response")
             val valueExpr = state.models[0].eval(expr)
 
             val type = cp.findType("org.springframework.mock.web.MockHttpServletResponse")
@@ -266,16 +129,13 @@ class JcSpringTest private constructor(
             return JcSpringResponse(response)
         }
 
-        private fun concretizeSimple(mode: ResolveMode, state: JcState, expr: UExpr<out USort>, type: JcType) =
-            (state.memory as JcConcreteMemory).concretize(
-                state, state.models[0].eval(expr), type, mode
-            )
+        private fun getSpringRequest(state: JcSpringState): JcSpringRequest {
+            val requestConcretizer = { value: UExpr<out USort>, type: JcType -> concretizeSimple(REQUEST_MOD, state, value, type) }
+            return JcSpringPinnedValuesRequest(state.userDefinedValues, requestConcretizer)
+        }
 
-        private fun concretizeAsList(mode: ResolveMode, state: JcState, expr: UExpr<out USort>, type: JcType) =
-            concretizeSimple(mode, state, expr, type)?.let { value ->
-                if (value is Iterable<*>) value.map { it!! }.toList()
-                else listOf(value)
-            }
+        private fun concretizeSimple(mode: ResolveMode, state: JcState, expr: UExpr<out USort>, type: JcType) =
+            (state.memory as JcConcreteMemory).concretize(state, state.models[0].eval(expr), type, mode)
     }
 
     val isSuccess get() = response != null
@@ -291,7 +151,7 @@ class JcSpringTest private constructor(
             fromField = generatedTestClass.fields.first { it.name.contains("mockMvc") }.field //TODO: mb error here
         ).also { initStatements.addAll(it.getInitDSL()) }
 
-        val reqDSL = generateReqDSL(reqKind, reqPath, reqAttrs).let { (reqDSL, reqInitDSL) ->
+        val reqDSL = generateReqDSL(request).let { (reqDSL, reqInitDSL) ->
             initStatements.addAll(reqInitDSL)
             reqDSL
         }
@@ -321,11 +181,17 @@ class JcSpringTest private constructor(
     }
 
     private fun generateReqDSL(
-        reqKind: SpringReqKind,
-        reqPath: SpringReqPath,
-        reqAttrs: List<SpringReqAttr>
+        request: JcSpringRequest
     ): Pair<UTestExpression, List<UTestInst>> {
-        val builder = SpringReqDSLBuilder.createReq(ctx, reqKind, reqPath).addAttrs(reqAttrs)
+
+        val builder = SpringReqDSLBuilder.createRequest(ctx, request.getMethod(), request.getPath(), request.getUriVariables())
+        request.getHeaders().forEach { builder.addHeader(it) }
+        request.getParameters().forEach { builder.addParameter(it) }
+
         return Pair(builder.getDSL(), builder.getInitDSL())
+    }
+
+    fun getPath(): String {
+        return request.getPath()
     }
 }

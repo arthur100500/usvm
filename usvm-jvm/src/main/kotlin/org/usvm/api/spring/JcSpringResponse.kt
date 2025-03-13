@@ -26,6 +26,6 @@ class JcSpringResponse(private val response: Any) {
     fun getHeaders(): List<JcSpringHttpHeader> {
         val headers = getFromField("headers") as Any
         val keys = headers.javaClass.getDeclaredMethod("keySet").invoke(headers) as Set<String>
-        return keys.map { JcSpringHttpHeader(it, getFromMethod("getHeader", arrayOf(String::class.java), arrayOf(it))) }
+        return keys.map { JcSpringHttpHeader(it, listOf(getFromMethod("getHeader", arrayOf(String::class.java), arrayOf(it)))) }
     }
 }

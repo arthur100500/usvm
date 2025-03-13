@@ -145,8 +145,25 @@ class SpringMatchersDSLBuilder(
     private val initStatements: MutableList<UTestInst> = mutableListOf()
     private val matchers: MutableList<UTestExpression> = mutableListOf()
 
+    private fun wrapStringList(list: List<Any>): UTestCreateArrayExpression {
+        val listDsl = UTestCreateArrayExpression(ctx.cp.stringType(), UTestIntExpression(list.size, ctx.cp.int))
+        val listInitializer = List(list.size) {
+            UTestArraySetStatement(
+                listDsl,
+                UTestIntExpression(it, ctx.cp.int),
+                // TODO: Learn how to do object expression #AA
+                UTestStringExpression(list[it].toString(), ctx.stringType)
+            )
+        }
+        initStatements.addAll(listOf(listDsl) + listInitializer)
+        return listDsl
+    }
+
+    @Suppress("UNCHECKED_CAST")
     private fun wrapArgument(argument: Any): UTestExpression {
         // TODO: other types #AA
+        if (argument is List<*>)
+            return wrapStringList(argument as List<Any>)
         return when (argument.javaClass) {
             Integer::class.java -> UTestIntExpression(argument as Int, ctx.cp.int)
             String::class.java -> UTestStringExpression(argument as String, ctx.cp.stringType())
@@ -211,8 +228,8 @@ class SpringReqDSLBuilder private constructor(
 ) {
     companion object {
 
-        fun createReq(ctx: JcContext, kind: SpringReqKind, path: SpringReqPath): SpringReqDSLBuilder =
-            commonReqDSLBuilder(kind.toString(), ctx, path.path, path.pathVariables)
+        fun createRequest(ctx: JcContext, method: JcSpringRequestMethod, path: String, pathVariables: List<Any?>): SpringReqDSLBuilder =
+            commonReqDSLBuilder(ctx, method, path, pathVariables)
 
         private const val MOCK_MVC_REQUEST_BUILDERS_CP =
             "org.springframework.test.web.servlet.request.MockMvcRequestBuilders"
@@ -221,20 +238,22 @@ class SpringReqDSLBuilder private constructor(
             "org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder"
 
         private fun commonReqDSLBuilder(
-            type: String,
             ctx: JcContext,
+            method: JcSpringRequestMethod,
             path: String,
-            pathVariables: List<Any>
+            pathVariables: List<Any?>
         ): SpringReqDSLBuilder {
-            val staticMethod = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, type).method
+            val requestMethodName = method.name.lowercase()
+            val staticMethod = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, requestMethodName).method
             val initDSL = mutableListOf<UTestInst>()
-            val pathArgs = pathVariables.map { it.toString() }
+            val pathArgs = pathVariables.map { it }
             val pathArgsArray = UTestCreateArrayExpression(ctx.stringType, UTestIntExpression(pathArgs.size, ctx.cp.int))
             val pathArgsInitializer = List(pathArgs.size) {
                 UTestArraySetStatement(
                     pathArgsArray,
                     UTestIntExpression(it, ctx.cp.int),
-                    UTestStringExpression(pathArgs[it], ctx.stringType)
+                    // TODO: Learn how to do object expression #AA
+                    UTestStringExpression(pathArgs[it].toString(), ctx.stringType)
                 )
             }
             initDSL.addAll(listOf(pathArgsArray) + pathArgsInitializer)
@@ -252,15 +271,15 @@ class SpringReqDSLBuilder private constructor(
     fun getInitDSL(): List<UTestInst> = initStatements
     fun getDSL() = reqDSL
 
-    fun addParam(attr: ParamAttr): SpringReqDSLBuilder {
+    fun addParameter(attr: JcSpringHttpParameter): SpringReqDSLBuilder {
         val method = ctx.cp.findJcMethod(MOCK_HTTP_SERVLET_REQUEST_BUILDER_CP, "param").method
-        addStrArrOfStrCallDSL(method, attr.name, attr.values)
+        addStrArrOfStrCallDSL(method, attr.getName(), attr.getValues())
         return this
     }
 
-    fun addHeader(attr: HeaderAttr): SpringReqDSLBuilder {
+    fun addHeader(attr: JcSpringHttpHeader): SpringReqDSLBuilder {
         val method = ctx.cp.findJcMethod(MOCK_HTTP_SERVLET_REQUEST_BUILDER_CP, "header").method
-        addStrArrOfStrCallDSL(method, attr.name, attr.values)
+        addStrArrOfStrCallDSL(method, attr.getName(), attr.getValues())
         return this
     }
 
@@ -273,16 +292,6 @@ class SpringReqDSLBuilder private constructor(
             method = mName,
             args = argsDSL,
         ).also { reqDSL = it }
-    }
-
-    fun addAttrs(attrs: List<SpringReqAttr>): SpringReqDSLBuilder {
-        attrs.forEach { attr ->
-            when (attr) {
-                is ParamAttr -> addParam(attr)
-                is HeaderAttr -> addHeader(attr)
-            }
-        }
-        return this
     }
 
     /*

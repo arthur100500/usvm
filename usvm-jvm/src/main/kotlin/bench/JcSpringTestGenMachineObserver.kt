@@ -42,7 +42,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
 
     override fun onStateTerminated(state: JcSpringState, stateReachable: Boolean) {
         state.callStack.push(state.entrypoint, state.entrypoint.instList[0])
-        if (!stateReachable || state.reqSetup.size < 2) return
+        if (!stateReachable || !state.hasEnoughInfoForTest()) return
         try {
             val test = JcSpringTest.generateFromState(state)
             val testDsl = test.generateTestDSL()
@@ -57,7 +57,7 @@ class JcSpringTestGenMachineObserver(private val machine: JcSpringMachine, cp: J
                 listOf(
                     UTestRenderWrapper(
                         testDsl,
-                        JcSpringTestMeta(test.generatedTestClass, test.reqPath.path, JcSpringTestKind.WebMVC)
+                        JcSpringTestMeta(test.generatedTestClass, test.getPath(), JcSpringTestKind.WebMVC)
                     )
                 )
             )
