@@ -47,10 +47,11 @@ import org.usvm.util.name
 
 class SpringTestExecDSLBuilder private constructor(
     private val ctx: JcContext,
-    private val initStatements: MutableList<UTestInst>,
+    private val initStatements: MutableList<UTestStatement>,
     private var mockMvcDSL: UTestExpression,
     private var isPerformed: Boolean = false,
-    private var generatedTestClass: JcClassType
+    private var generatedTestClass: JcClassType,
+    private var testClassInstDSL: UTestExpression
 ) {
     companion object {
         /*
@@ -65,38 +66,41 @@ class SpringTestExecDSLBuilder private constructor(
             generatedTestClass: JcClassType,
             fromField: JcField
         ): SpringTestExecDSLBuilder {
-            val initStatements = mutableListOf<UTestInst>()
+            val initStatements = mutableListOf<UTestStatement>()
 
             val testCtxManagerName = "org.springframework.test.context.TestContextManager"
             val testCtxManagerDSL = UTestConstructorCall(
                 method = ctx.cp.findJcMethod(testCtxManagerName, "<init>").method,
                 args = listOf(UTestClassExpression(generatedTestClass))
-            ).also { initStatements.add(it) }
+            )
 
             val generatedClassInstDSL = UTestConstructorCall(
                 method = ctx.cp.findJcMethod(generatedTestClass.name, "<init>").method,
                 args = listOf()
-            ).also { initStatements.add(it) }
+            )
 
             UTestMethodCall(
                 instance = testCtxManagerDSL,
                 method = ctx.cp.findJcMethod(testCtxManagerName, "prepareTestInstance").method,
                 args = listOf(generatedClassInstDSL)
-            ).also { initStatements.add(it) }
+            )
 
             val mockMvcDSL = UTestGetFieldExpression(
                 instance = generatedClassInstDSL,
                 field = fromField,
-            ).also { initStatements.add(it) }
+            )
 
             return SpringTestExecDSLBuilder(
                 ctx = ctx,
                 initStatements = initStatements,
                 mockMvcDSL = mockMvcDSL,
-                generatedTestClass = generatedTestClass
+                generatedTestClass = generatedTestClass,
+                testClassInstDSL = generatedClassInstDSL
             )
         }
     }
+
+    fun getTestClassInstance() = testClassInstDSL
 
     fun addPerformCall(reqDSL: UTestExpression): SpringTestExecDSLBuilder {
         UTestMethodCall(
@@ -142,7 +146,7 @@ class SpringMatchersDSLBuilder(
 ) {
     private val SPRING_RESULT_PACK = "org.springframework.test.web.servlet.result"
 
-    private val initStatements: MutableList<UTestInst> = mutableListOf()
+    private val initStatements: MutableList<UTestStatement> = mutableListOf()
     private val matchers: MutableList<UTestExpression> = mutableListOf()
 
     private fun wrapStringList(list: List<Any>): UTestCreateArrayExpression {
@@ -155,7 +159,7 @@ class SpringMatchersDSLBuilder(
                 UTestStringExpression(list[it].toString(), ctx.stringType)
             )
         }
-        initStatements.addAll(listOf(listDsl) + listInitializer)
+        initStatements.addAll(listInitializer)
         return listDsl
     }
 
@@ -180,7 +184,7 @@ class SpringMatchersDSLBuilder(
         val matcherDsl = UTestStaticMethodCall(
             method = createMatcherMethod,
             args = matcherArguments.map { wrapArgument(it) }.toList()
-        ).also { initStatements.add(it) }
+        )
 
         return matcherDsl
     }
@@ -222,7 +226,7 @@ class SpringMatchersDSLBuilder(
 
 
 class SpringReqDSLBuilder private constructor(
-    private val initStatements: MutableList<UTestInst>,
+    private val initStatements: MutableList<UTestStatement>,
     private var reqDSL: UTestExpression,
     private val ctx: JcContext
 ) {
@@ -245,7 +249,7 @@ class SpringReqDSLBuilder private constructor(
         ): SpringReqDSLBuilder {
             val requestMethodName = method.name.lowercase()
             val staticMethod = ctx.cp.findJcMethod(MOCK_MVC_REQUEST_BUILDERS_CP, requestMethodName).method
-            val initDSL = mutableListOf<UTestInst>()
+            val initDSL = mutableListOf<UTestStatement>()
             val pathArgs = pathVariables.map { it }
             val pathArgsArray = UTestCreateArrayExpression(ctx.stringType, UTestIntExpression(pathArgs.size, ctx.cp.int))
             val pathArgsInitializer = List(pathArgs.size) {
@@ -256,7 +260,7 @@ class SpringReqDSLBuilder private constructor(
                     UTestStringExpression(pathArgs[it].toString(), ctx.stringType)
                 )
             }
-            initDSL.addAll(listOf(pathArgsArray) + pathArgsInitializer)
+            initDSL.addAll(pathArgsInitializer)
             val argsDSL = mutableListOf<UTestExpression>()
             argsDSL.add(UTestStringExpression(path, ctx.stringType))
             argsDSL.add(pathArgsArray)

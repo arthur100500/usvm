@@ -1,6 +1,5 @@
 package org.usvm.api.spring
 
-import jakarta.servlet.ServletContext
 import jakarta.servlet.http.Cookie
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
@@ -14,7 +13,6 @@ import org.jacodb.api.jvm.ext.findMethodOrNull
 import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.findType
-import org.jacodb.api.jvm.ext.objectType
 import org.springframework.mock.web.MockServletContext
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.usvm.UExpr
@@ -25,12 +23,11 @@ import org.usvm.machine.state.JcSpringState
 import org.usvm.machine.state.concreteMemory.JcConcreteMemory
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
 import org.usvm.test.api.UTest
-import org.usvm.test.api.UTestArraySetStatement
-import org.usvm.test.api.UTestCreateArrayExpression
 import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestInst
 import org.usvm.test.api.UTestIntExpression
-import org.usvm.test.api.UTestStringExpression
+import org.usvm.test.api.UTestMockObject
+import org.usvm.test.api.UTestStatement
 import java.nio.charset.Charset
 
 
@@ -38,26 +35,6 @@ fun JcClasspath.findJcMethod(cName: String, mName: String): JcTypedMethod {
     val method = this.findClass(cName).toType().findMethodOrNull { it.name == mName }
     method?.let { return it }
     throw MethodNotFoundException("$mName not found")
-}
-
-fun List<String>.toStringArrayDsl(ctx: JcContext): Pair<UTestCreateArrayExpression, MutableList<UTestInst>> {
-    val initDSL = mutableListOf<UTestInst>()
-    val stringType = ctx.stringType
-    val intType = ctx.cp.int
-
-    val arrayDSL = UTestCreateArrayExpression(
-        elementType = stringType,
-        size = UTestIntExpression(this.size, intType),
-    ).also { initDSL.add(it) }
-
-    this.forEachIndexed { idx, str ->
-        UTestArraySetStatement(
-            arrayInstance = arrayDSL,
-            index = UTestIntExpression(idx, intType),
-            setValueExpression = UTestStringExpression(str, stringType),
-        ).also { initDSL.add(it) }
-    }
-    return Pair(arrayDSL, initDSL)
 }
 
 // todo:(path for test pipeline) /owners/find
@@ -72,6 +49,7 @@ class SpringExn
 class JcSpringTest private constructor(
     val ctx: JcContext,
     val generatedTestClass: JcClassType,
+    private val mocks: List<JcMockBean>,
     private val request: JcSpringRequest,
     private val response: JcSpringResponse?,
     private val exception: SpringExn?,
@@ -90,6 +68,7 @@ class JcSpringTest private constructor(
         private fun generateResponseTest(state: JcSpringState): JcSpringTest = JcSpringTest(
             state.ctx,
             getGeneratedClassName(state.ctx.cp),
+            mocks = getSpringMocks(state),
             request = getSpringRequest(state),
             response = getSpringResponse(state.ctx.cp, state),
             exception = null
@@ -98,6 +77,7 @@ class JcSpringTest private constructor(
         private fun generateExnTest(state: JcSpringState): JcSpringTest = JcSpringTest(
             state.ctx,
             getGeneratedClassName(state.ctx.cp),
+            mocks = getSpringMocks(state),
             request = getSpringRequest(state),
             response = null,
             exception = getSpringExn(),
@@ -135,20 +115,25 @@ class JcSpringTest private constructor(
             return JcSpringResponse(response)
         }
 
+        private fun getSpringMocks(state: JcSpringState): List<JcMockBean> {
+            val serviceType = state.ctx.cp.findType("org.usvm.spring.benchmarks.service.CoolService") as JcClassType
+            val genIntMethod = serviceType.declaredMethods.find { it.name == "getIntValue" }?.method!!
+            val returnListMethod = serviceType.declaredMethods.find { it.name == "returnList" }?.method!!
+            val returnArrayListMethod = serviceType.declaredMethods.find { it.name == "returnArrayList" }?.method!!
+            val versionField = serviceType.declaredFields.find { it.name == "version" }?.field!!
+            val results = List(3) { UTestIntExpression(it + 32, state.ctx.cp.int) }
+            val otherResults = List(2) { UTestIntExpression(it + 1, state.ctx.cp.int) }
+            val fakeMock = JcRealMockBean(UTestMockObject(
+                serviceType,
+                mapOf(versionField to UTestIntExpression(123, state.ctx.cp.int)),
+                mapOf(genIntMethod to results, returnListMethod to results, returnArrayListMethod to otherResults)
+            ))
+            return listOf(fakeMock)
+        }
+
         private fun getSpringRequest(state: JcSpringState): JcSpringRequest {
-            // TEST CODE, REAL IS BELOW
-            val fakeRequest = get("/some/path/{ohio}", 123)
-                .param("param1", "32").param("param2", "32", "12")
-                .header("header1", "ohio").header("header2", "hi", "hello")
-                .content("this is peak content")
-                .characterEncoding(Charset.defaultCharset())
-                .requestAttr("attrib1", "bruh needs support...")
-                .cookie(Cookie("cookie", "yippee"))
-                .queryParam("theweather", "outside", "is", "rizzy")
-                .buildRequest(MockServletContext())
-            return JcSpringRealRequest(fakeRequest)
-            // val requestConcretizer = { value: JcSpringPinnedValue -> concretizeSimple(REQUEST_MOD, state, value.getExpr(), value.getType()) }
-            // return JcSpringPinnedValuesRequest(state.pinnedValues, requestConcretizer)
+            val requestConcretizer = { value: JcSpringPinnedValue -> concretizeSimple(REQUEST_MOD, state, value.getExpr(), value.getType()) }
+            return JcSpringPinnedValuesRequest(state.pinnedValues, requestConcretizer)
         }
 
         private fun concretizeSimple(mode: ResolveMode, state: JcState, expr: UExpr<out USort>, type: JcType) =
@@ -167,6 +152,9 @@ class JcSpringTest private constructor(
             generatedTestClass = generatedTestClass,
             fromField = generatedTestClass.fields.first { it.name.contains("mockMvc") }.field //TODO: mb error here
         ).also { initStatements.addAll(it.getInitDSL()) }
+
+        val mocks = generateMocksDSL(mocks, testExecBuilder.getTestClassInstance())
+        initStatements.addAll(mocks)
 
         val reqDSL = generateReqDSL(request).let { (reqDSL, reqInitDSL) ->
             initStatements.addAll(reqInitDSL)
@@ -206,6 +194,12 @@ class JcSpringTest private constructor(
         request.getParameters().forEach { builder.addParameter(it) }
 
         return Pair(builder.getDSL(), builder.getInitDSL())
+    }
+
+    private fun generateMocksDSL(mocks: List<JcMockBean>, testClass: UTestExpression): List<UTestInst>{
+        val builder = SpringMockBeanBuilder(ctx.cp, testClass)
+        mocks.forEach { builder.addMock(it) }
+        return builder.getInitStatements() + builder.getMockitoCalls()
     }
 
     fun getPath(): String {
