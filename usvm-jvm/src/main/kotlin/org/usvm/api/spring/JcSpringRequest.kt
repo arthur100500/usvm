@@ -1,11 +1,13 @@
 ﻿package org.usvm.api.spring
 
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
-import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestBody
-import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestMethod
-import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey.Companion.requestPath
+import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.requestBody
+import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.requestMethod
+import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.requestPath
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValues
+import org.usvm.machine.state.pinnedValues.JcStringPinnedKey
+import org.usvm.test.api.UTestExpression
 import java.util.Enumeration
 
 interface JcSpringRequest {
@@ -66,10 +68,9 @@ class JcSpringPinnedValuesRequest(
 ) : JcSpringRequest {
 
     private fun collectAndConcretize(source: JcSpringPinnedValueSource): Map<String, Any?> {
-        return pinnedValues.getValuesOfSource(source)
+        return pinnedValues.getValuesOfSource<JcStringPinnedKey>(source)
             .map { (key, value) ->
                 val name = key.getName()
-                check(name != null) { "Only named pinned values here!" }
                 name to concretize(value)
             }.toMap()
     }

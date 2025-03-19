@@ -10,18 +10,18 @@ import org.usvm.api.makeSymbolicRef
 import org.usvm.machine.interpreter.JcStepScope
 
 class JcSpringPinnedValues (
-    private var pinnedValues: Map<JcSpringPinnedValueKey, JcSpringPinnedValue> = emptyMap()
+    private var pinnedValues: Map<JcPinnedKey, JcSpringPinnedValue> = emptyMap()
 ){
-    fun getValue(key: JcSpringPinnedValueKey): JcSpringPinnedValue? {
+    fun getValue(key: JcPinnedKey): JcSpringPinnedValue? {
         return pinnedValues[key]
     }
 
-    fun setValue(key: JcSpringPinnedValueKey, value: JcSpringPinnedValue) {
+    fun setValue(key: JcPinnedKey, value: JcSpringPinnedValue) {
         pinnedValues = pinnedValues.filter { it.key != key }
         pinnedValues += key to value
     }
     
-    fun createIfAbsent(key: JcSpringPinnedValueKey, type: JcType, scope: JcStepScope, sort: USort, nullable: Boolean = true): JcSpringPinnedValue? {
+    fun createIfAbsent(key: JcPinnedKey, type: JcType, scope: JcStepScope, sort: USort, nullable: Boolean = true): JcSpringPinnedValue? {
         val existingValue = getValue(key)
         if (existingValue != null)
             return existingValue
@@ -41,14 +41,19 @@ class JcSpringPinnedValues (
         return newValue
     }
 
-    fun getKeyOfExpr(value: UExpr<out USort>): JcSpringPinnedValueKey? {
+    fun getKeyOfExpr(value: UExpr<out USort>): JcPinnedKey? {
         val pair = pinnedValues.entries.firstOrNull { it.value.getExpr() == value }
         if (pair == null)
             return null
         return pair.key
     }
 
-    fun getValuesOfSource(source: JcSpringPinnedValueSource): Map<JcSpringPinnedValueKey, JcSpringPinnedValue> {
-        return pinnedValues.filter { it.key.getSource() == source }
+    // TODO: Find solution without unchecked cast #AA
+    @Suppress("UNCHECKED_CAST")
+    fun <K : JcPinnedKey> getValuesOfSource(source: JcSpringPinnedValueSource): Map<K, JcSpringPinnedValue> {
+        return pinnedValues
+            .filter { it.key.getSource() == source }
+            .map { (k, v) -> k as K to v}
+            .toMap()
     }
 }

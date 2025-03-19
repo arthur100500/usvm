@@ -117,7 +117,8 @@ import org.usvm.machine.state.concreteMemory.classesOfLocations
 import org.usvm.machine.state.concreteMemory.isSpringController
 import org.usvm.machine.state.concreteMemory.javaName
 import org.usvm.machine.state.concreteMemory.toJcType
-import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueKey
+import org.usvm.machine.state.pinnedValues.JcPinnedKey
+import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.mockCallResult
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 
 class JcMethodApproximationResolver(
@@ -627,7 +628,7 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/simple/increment_from_header"
+        return path != "/service/gen_graph_node"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
@@ -743,7 +744,7 @@ class JcMethodApproximationResolver(
                 }
 
                 val source = JcSpringPinnedValueSource.valueOf(pinnedSourceName)
-                val key = JcSpringPinnedValueKey.ofSource(source, name)
+                val key = if (name != null) JcPinnedKey.ofName(source, name) else JcPinnedKey.ofSource(source)
                 setPinnedValue(key, sourceArg, type)
 
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
@@ -773,7 +774,7 @@ class JcMethodApproximationResolver(
                 }
 
                 val source = JcSpringPinnedValueSource.valueOf(pinnedSourceName)
-                val key = JcSpringPinnedValueKey.ofSource(source, name)
+                val key = if (name != null) JcPinnedKey.ofName(source, name) else JcPinnedKey.ofSource(source)
                 // TODO: Other sorts? #AA
                 val value = createPinnedIfAbsent(key, type, scope, ctx.addressSort) ?: return@calcOnState false
 
@@ -818,7 +819,7 @@ class JcMethodApproximationResolver(
                 // TODO: Use other symbolic check if possible #AA
                 if (value != null || key == null) return@calcOnState false
 
-                val pinnedValueKey = JcSpringPinnedValueKey.requestAttribute(key)
+                val pinnedValueKey = JcPinnedKey.requestAttribute(key)
                 setPinnedValue(pinnedValueKey, valueArgument, ctx.cp.objectType)
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
                 return@calcOnState true
@@ -830,7 +831,7 @@ class JcMethodApproximationResolver(
             return scope.calcOnState {
                 this as JcSpringState
                 val key = memory.tryHeapRefToObject(keyArgument as UConcreteHeapRef) as String? ?: return@calcOnState false
-                val userValueKey = JcSpringPinnedValueKey.requestAttribute(key)
+                val userValueKey = JcPinnedKey.requestAttribute(key)
                 val writtenValue = getPinnedValue(userValueKey) ?: return@calcOnState false
                 skipMethodInvocationWithValue(methodCall, writtenValue.getExpr())
                 return@calcOnState true
@@ -845,7 +846,7 @@ class JcMethodApproximationResolver(
         if (methodCall.method.name == "hasBody") {
             return scope.calcOnState {
                 this as JcSpringState
-                val hasBody = createPinnedIfAbsent(JcSpringPinnedValueKey.requestHasBody(), ctx.cp.boolean, scope, ctx.booleanSort) ?: return@calcOnState false
+                val hasBody = createPinnedIfAbsent(JcPinnedKey.requestHasBody(), ctx.cp.boolean, scope, ctx.booleanSort) ?: return@calcOnState false
                 skipMethodInvocationWithValue(methodCall, hasBody.getExpr())
                 return@calcOnState true
             }
@@ -971,26 +972,33 @@ class JcMethodApproximationResolver(
         val returnType = ctx.cp.findType(methodCall.method.returnType.typeName)
         if (options.springAnalysisMode == SpringAnalysisMode.WebMVCTest) {
             val mockedValue: UExpr<out USort>
+            val mockedValueType: JcType
             when {
                 returnType is JcClassType -> {
                     val suitableType = findSuitableTypeForMock(returnType)
                     if (suitableType != null) {
+                        mockedValueType = suitableType
                         mockedValue = scope.makeSymbolicRef(suitableType)!!
                     } else {
+                        mockedValueType = returnType
                         mockedValue = scope.makeSymbolicRefSubtype(returnType)!!
                     }
                 }
                 returnType is JcArrayType -> {
+                    mockedValueType = returnType
                     mockedValue = scope.makeSymbolicRef(returnType)!!
                 }
                 else -> {
                     check(returnType is JcPrimitiveType)
+                    mockedValueType = returnType
                     mockedValue = scope.calcOnState { makeSymbolicPrimitive(ctx.typeToSort(returnType)) }
                 }
             }
 
             println("[Mocked] Mocked service method")
             scope.doWithState {
+                this as JcSpringState
+                setPinnedValue(mockCallResult(methodCall.method), mockedValue, mockedValueType)
                 skipMethodInvocationWithValue(methodCall, mockedValue)
             }
 
@@ -1003,6 +1011,7 @@ class JcMethodApproximationResolver(
     private fun approximateSpringRepositoryMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
         val returnType = ctx.cp.findType(methodCall.method.returnType.typeName)
         val mockedValue: UExpr<out USort>
+        val mockedValueType: JcType
         when {
             returnType is JcClassType -> {
                 val suitableType =
@@ -1011,15 +1020,19 @@ class JcMethodApproximationResolver(
                             (it as? JcClassType)?.jcClass?.let { it.isInterface || it.isAbstract }
                                 ?: true
                         }.first()
+                mockedValueType = suitableType
                 mockedValue = scope.makeSymbolicRef(suitableType)!!
             }
             else -> {
                 check(returnType is JcPrimitiveType)
+                mockedValueType = returnType
                 mockedValue = scope.calcOnState { makeSymbolicPrimitive(ctx.typeToSort(returnType)) }
             }
         }
         println("[Mocked] Mocked repository method")
         scope.doWithState {
+            this as JcSpringState
+            setPinnedValue(mockCallResult(method), mockedValue, mockedValueType)
             skipMethodInvocationWithValue(methodCall, mockedValue)
         }
         return true

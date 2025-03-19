@@ -21,6 +21,7 @@ import org.usvm.api.util.JcTestStateResolver.ResolveMode
 import org.usvm.machine.JcContext
 import org.usvm.machine.state.JcSpringState
 import org.usvm.machine.state.concreteMemory.JcConcreteMemory
+import org.usvm.machine.state.concreteMemory.toTypedMethod
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
 import org.usvm.test.api.UTest
 import org.usvm.test.api.UTestExpression
@@ -49,11 +50,11 @@ class SpringExn
 class JcSpringTest private constructor(
     val ctx: JcContext,
     val generatedTestClass: JcClassType,
-    private val mocks: List<JcMockBean>,
+    private val mocks: Pair<List<JcMockBean>, List<UTestInst>>,
     private val request: JcSpringRequest,
     private val response: JcSpringResponse?,
     private val exception: SpringExn?,
-//    todo: exn
+    private val exprResolver: JcSpringTestExprResolver
 ) {
     companion object {
         private val REQUEST_MOD = ResolveMode.MODEL
@@ -65,13 +66,23 @@ class JcSpringTest private constructor(
             else
                 generateExnTest(state)
 
+        private fun createExprResolver(state: JcSpringState): JcSpringTestExprResolver {
+            return JcSpringTestExprResolver(
+                state.ctx,
+                state.models[0],
+                state.memory,
+                state.entrypoint.toTypedMethod
+            )
+        }
+
         private fun generateResponseTest(state: JcSpringState): JcSpringTest = JcSpringTest(
             state.ctx,
             getGeneratedClassName(state.ctx.cp),
             mocks = getSpringMocks(state),
             request = getSpringRequest(state),
             response = getSpringResponse(state.ctx.cp, state),
-            exception = null
+            exception = null,
+            exprResolver = createExprResolver(state)
         )
 
         private fun generateExnTest(state: JcSpringState): JcSpringTest = JcSpringTest(
@@ -81,6 +92,7 @@ class JcSpringTest private constructor(
             request = getSpringRequest(state),
             response = null,
             exception = getSpringExn(),
+            exprResolver = createExprResolver(state)
         )
 
         private fun getSpringExn(): SpringExn {
@@ -95,7 +107,6 @@ class JcSpringTest private constructor(
         }
 
         private fun getSpringResponse(cp: JcClasspath, state: JcSpringState): JcSpringResponse {
-            // Will be refactored with common refactor merge!!
             val result = state.getResult()
             assert(result != null)
             val expr = result ?: throw IllegalArgumentException("No Response")
@@ -103,7 +114,6 @@ class JcSpringTest private constructor(
 
             val type = cp.findType("org.springframework.mock.web.MockHttpServletResponse")
 
-            // TODO: problem with cast
             val response = concretizeSimple(
                 RESPONSE_MOD,
                 state,
@@ -115,20 +125,11 @@ class JcSpringTest private constructor(
             return JcSpringResponse(response)
         }
 
-        private fun getSpringMocks(state: JcSpringState): List<JcMockBean> {
-            val serviceType = state.ctx.cp.findType("org.usvm.spring.benchmarks.service.CoolService") as JcClassType
-            val genIntMethod = serviceType.declaredMethods.find { it.name == "getIntValue" }?.method!!
-            val returnListMethod = serviceType.declaredMethods.find { it.name == "returnList" }?.method!!
-            val returnArrayListMethod = serviceType.declaredMethods.find { it.name == "returnArrayList" }?.method!!
-            val versionField = serviceType.declaredFields.find { it.name == "version" }?.field!!
-            val results = List(3) { UTestIntExpression(it + 32, state.ctx.cp.int) }
-            val otherResults = List(2) { UTestIntExpression(it + 1, state.ctx.cp.int) }
-            val fakeMock = JcRealMockBean(UTestMockObject(
-                serviceType,
-                mapOf(versionField to UTestIntExpression(123, state.ctx.cp.int)),
-                mapOf(genIntMethod to results, returnListMethod to results, returnArrayListMethod to otherResults)
-            ))
-            return listOf(fakeMock)
+        private fun getSpringMocks(state: JcSpringState): Pair<List<JcMockBean>, List<UTestInst>> {
+            val resolver = createExprResolver(state)
+            return resolver.withMode(REQUEST_MOD) {
+                return@withMode JcMockBean.ofPinnedValues(state.pinnedValues, resolver)
+            }
         }
 
         private fun getSpringRequest(state: JcSpringState): JcSpringRequest {
@@ -153,7 +154,8 @@ class JcSpringTest private constructor(
             fromField = generatedTestClass.fields.first { it.name.contains("mockMvc") }.field //TODO: mb error here
         ).also { initStatements.addAll(it.getInitDSL()) }
 
-        val mocks = generateMocksDSL(mocks, testExecBuilder.getTestClassInstance())
+        initStatements.addAll(mocks.second)
+        val mocks = generateMocksDSL(mocks.first, testExecBuilder.getTestClassInstance())
         initStatements.addAll(mocks)
 
         val reqDSL = generateReqDSL(request).let { (reqDSL, reqInitDSL) ->
