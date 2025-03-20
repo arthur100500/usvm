@@ -6,8 +6,8 @@ import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.requestMethod
 import org.usvm.machine.state.pinnedValues.JcPinnedKey.Companion.requestPath
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValues
+import org.usvm.machine.state.pinnedValues.JcSpringRawPinnedValues
 import org.usvm.machine.state.pinnedValues.JcStringPinnedKey
-import org.usvm.test.api.UTestExpression
 import java.util.Enumeration
 
 interface JcSpringRequest {
@@ -63,15 +63,16 @@ class JcSpringRealRequest(private val request: Any) : JcSpringRequest {
 }
 
 class JcSpringPinnedValuesRequest(
-    private val pinnedValues: JcSpringPinnedValues,
-    private val concretize: (value: JcSpringPinnedValue) -> Any?
+    pinnedValues: JcSpringPinnedValues,
+    concretize: (value: JcSpringPinnedValue) -> Any?
 ) : JcSpringRequest {
+    private val calculatedValues = JcSpringRawPinnedValues(pinnedValues.getMap().map { (k, v) -> k to concretize(v) }.toMap())
 
     private fun collectAndConcretize(source: JcSpringPinnedValueSource): Map<String, Any?> {
-        return pinnedValues.getValuesOfSource<JcStringPinnedKey>(source)
+        return calculatedValues.getValuesOfSource<JcStringPinnedKey>(source)
             .map { (key, value) ->
                 val name = key.getName()
-                name to concretize(value)
+                name to value
             }.toMap()
     }
 
@@ -103,19 +104,19 @@ class JcSpringPinnedValuesRequest(
     }
 
     override fun getMethod(): JcSpringRequestMethod {
-        val method = pinnedValues.getValue(requestMethod())?.let { concretize(it) }
+        val method = calculatedValues.getValue(requestMethod())
         check(method != null && method is String)
         return JcSpringRequestMethod.valueOf(method.uppercase())
     }
 
     override fun getPath(): String {
-        val path = pinnedValues.getValue(requestPath())?.let { concretize(it) }
+        val path = calculatedValues.getValue(requestPath())
         check(path != null && path is String)
         return path
     }
 
     override fun getContentAsString(): String {
-        val body = pinnedValues.getValue(requestBody())?.let(concretize) ?: ""
+        val body = calculatedValues.getValue(requestBody())
         return body as String
     }
 
