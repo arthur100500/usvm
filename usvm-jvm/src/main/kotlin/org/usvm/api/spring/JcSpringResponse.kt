@@ -1,7 +1,5 @@
 ﻿package org.usvm.api.spring
 
-import org.usvm.machine.state.concreteMemory.getFieldValue
-
 @Suppress("UNCHECKED_CAST")
 class JcSpringResponse(private val response: Any) {
     private val responseClass = response.javaClass
@@ -14,16 +12,19 @@ class JcSpringResponse(private val response: Any) {
         return responseClass.getMethod(methodName, *parameterTypes).invoke(response, *arguments) as T
     }
 
-    private fun <T> getFromField(fieldName: String): T {
-        return responseClass.getDeclaredField(fieldName).getFieldValue(response) as T
+    private fun getHeader(name: String): Collection<String> {
+        return getFromMethod("getHeaders", arrayOf(String::class.java), arrayOf(name))
     }
 
     fun getStatusCode(): Int = getFromMethod("getStatus")
 
+    // TODO: Will not work on HttpServletResonse interface #AA
     fun getErrorMessage(): String = getFromMethod("getErrorMessage")
 
+    // TODO: Will not work on HttpServletResonse interface #AA
     fun getContentLength(): Int = getFromMethod("getContentLength")
 
+    // TODO: Will not work on HttpServletResonse interface #AA
     fun getCookies(): List<JcSpringHttpCookie> {
         val rawCookies = getFromMethod("getCookies") as Array<Any>? ?: arrayOf()
         return rawCookies.map { JcSpringHttpCookie.ofCookieObject(it) }
@@ -32,8 +33,7 @@ class JcSpringResponse(private val response: Any) {
     fun getContentAsString(): String = getFromMethod("getContentAsString")
 
     fun getHeaders(): List<JcSpringHttpHeader> {
-        val headers = getFromField("headers") as Any
-        val keys = headers.javaClass.getDeclaredMethod("keySet").invoke(headers) as Set<String>
-        return keys.map { JcSpringHttpHeader(it, listOf(getFromMethod("getHeader", arrayOf(String::class.java), arrayOf(it)))) }
+        val headersNames = getFromMethod("getHeaderNames") as Collection<String>
+        return headersNames.toList().map { JcSpringHttpHeader(it, getHeader(it).toList()) }
     }
 }

@@ -15,6 +15,7 @@ interface JcSpringRequest {
     fun getHeaders(): List<JcSpringHttpHeader>
     fun getMethod(): JcSpringRequestMethod
     fun getPath(): String
+    fun getEncoding(): String?
     fun getContentAsString(): String
     fun getParameters(): List<JcSpringHttpParameter>
     fun getUriVariables(): List<Any?>
@@ -23,14 +24,13 @@ interface JcSpringRequest {
 class JcSpringRealRequest(private val request: Any) : JcSpringRequest {
     val requestClass = request.javaClass
     init {
-        check(requestClass.name.endsWith("MockHttpServletRequest"))
+        check(requestClass.name.endsWith("HttpServletRequest"))
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> getFromMethod(methodName: String, parameterTypes: Array<Class<*>> = arrayOf(), arguments: Array<Any> = arrayOf()): T {
         return requestClass.getMethod(methodName, *parameterTypes).invoke(request, *arguments) as T
     }
-
     override fun getCookies(): List<JcSpringHttpCookie> {
         val rawCookies = getFromMethod("getCookies") as Array<Any>? ?: arrayOf()
         return rawCookies.map { JcSpringHttpCookie.ofCookieObject(it) }
@@ -42,14 +42,25 @@ class JcSpringRealRequest(private val request: Any) : JcSpringRequest {
 
     override fun getHeaders(): List<JcSpringHttpHeader> {
         val headersNames = getFromMethod("getHeaderNames") as Enumeration<String>
-        return headersNames.toList().map { JcSpringHttpHeader(it, getHeader(it).toList()) }
+        return headersNames.toList()
+            .filter { it != "Cookie" } // Cookies are in getCookies()
+            .map { JcSpringHttpHeader(it, getHeader(it).toList()) }
     }
 
     override fun getMethod(): JcSpringRequestMethod = JcSpringRequestMethod.valueOf(getFromMethod("getMethod"))
-
+    
     override fun getPath(): String = getFromMethod("getPathInfo")
 
-    override fun getContentAsString(): String = getFromMethod("getContentAsString")
+    override fun getEncoding(): String? = getFromMethod("getCharacterEncoding")
+    
+    override fun getContentAsString(): String {
+        // TODO: If read once will fail after! Needs copying request #AA
+        val encoding = getEncoding()
+        val inputStream = getFromMethod("getInputStream") as Any
+        val content = inputStream.javaClass.getMethod("readAllBytes").invoke(inputStream) as ByteArray
+        check(encoding != null) { "Cannot read content if encoding is not set" }
+        return String(content, charset(encoding))
+    }
 
     override fun getParameters(): List<JcSpringHttpParameter> {
         val parameterMap = getFromMethod("getParameterMap") as Map<String, Array<String>>
@@ -113,6 +124,10 @@ class JcSpringPinnedValuesRequest(
         val path = calculatedValues.getValue(requestPath())
         check(path != null && path is String)
         return path
+    }
+
+    override fun getEncoding(): String {
+        TODO("Not yet implemented")
     }
 
     override fun getContentAsString(): String {
