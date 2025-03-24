@@ -6,39 +6,16 @@ import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.ext.int
 import org.usvm.jvm.util.stringType
 import org.usvm.machine.JcContext
-import org.usvm.test.api.ArithmeticOperationType
-import org.usvm.test.api.ConditionType
-import org.usvm.test.api.UTest
-import org.usvm.test.api.UTestAllocateMemoryCall
-import org.usvm.test.api.UTestArithmeticExpression
-import org.usvm.test.api.UTestArrayGetExpression
-import org.usvm.test.api.UTestArrayLengthExpression
 import org.usvm.test.api.UTestArraySetStatement
-import org.usvm.test.api.UTestBinaryConditionExpression
-import org.usvm.test.api.UTestBinaryConditionStatement
-import org.usvm.test.api.UTestBooleanExpression
-import org.usvm.test.api.UTestByteExpression
 import org.usvm.test.api.UTestCall
-import org.usvm.test.api.UTestCastExpression
-import org.usvm.test.api.UTestCharExpression
 import org.usvm.test.api.UTestClassExpression
-import org.usvm.test.api.UTestConstExpression
 import org.usvm.test.api.UTestInst
 import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestConstructorCall
 import org.usvm.test.api.UTestCreateArrayExpression
-import org.usvm.test.api.UTestDoubleExpression
-import org.usvm.test.api.UTestFloatExpression
 import org.usvm.test.api.UTestGetFieldExpression
-import org.usvm.test.api.UTestGetStaticFieldExpression
 import org.usvm.test.api.UTestIntExpression
-import org.usvm.test.api.UTestLongExpression
 import org.usvm.test.api.UTestMethodCall
-import org.usvm.test.api.UTestMockObject
-import org.usvm.test.api.UTestNullExpression
-import org.usvm.test.api.UTestSetFieldStatement
-import org.usvm.test.api.UTestSetStaticFieldStatement
-import org.usvm.test.api.UTestShortExpression
 import org.usvm.test.api.UTestStatement
 import org.usvm.test.api.UTestStaticMethodCall
 import org.usvm.test.api.UTestStringExpression
@@ -48,6 +25,7 @@ import org.usvm.util.name
 class SpringTestExecDSLBuilder private constructor(
     private val ctx: JcContext,
     private val initStatements: MutableList<UTestStatement>,
+    private val prepareInstanceMethod: UTestMethodCall,
     private var mockMvcDSL: UTestExpression,
     private var isPerformed: Boolean = false,
     private var generatedTestClass: JcClassType,
@@ -79,7 +57,7 @@ class SpringTestExecDSLBuilder private constructor(
                 args = listOf()
             )
 
-            UTestMethodCall(
+            val prepareInstanceMethod = UTestMethodCall(
                 instance = testCtxManagerDSL,
                 method = ctx.cp.findJcMethod(testCtxManagerName, "prepareTestInstance").method,
                 args = listOf(generatedClassInstDSL)
@@ -93,6 +71,7 @@ class SpringTestExecDSLBuilder private constructor(
             return SpringTestExecDSLBuilder(
                 ctx = ctx,
                 initStatements = initStatements,
+                prepareInstanceMethod = prepareInstanceMethod,
                 mockMvcDSL = mockMvcDSL,
                 generatedTestClass = generatedTestClass,
                 testClassInstDSL = generatedClassInstDSL
@@ -127,7 +106,7 @@ class SpringTestExecDSLBuilder private constructor(
         return this
     }
 
-    fun getInitDSL(): List<UTestInst> = initStatements
+    fun getInitDSL(): List<UTestInst> = listOf(prepareInstanceMethod) + initStatements
 
     fun getIgnoreDsl(): UTestCall {
         assert(isPerformed)
@@ -289,8 +268,17 @@ class SpringReqDSLBuilder private constructor(
 
     private fun addStrArrOfStrCallDSL(mName: JcMethod, str: String, arrOfStr: List<Any>) {
         val argsDSL = mutableListOf<UTestExpression>()
+        val argsArray = UTestCreateArrayExpression(ctx.cp.stringType(), UTestIntExpression(arrOfStr.size, ctx.cp.int))
+        val argsInit = List(arrOfStr.size) {
+            UTestArraySetStatement(
+                argsArray,
+                UTestIntExpression(it, ctx.cp.int),
+                UTestStringExpression(arrOfStr[it].toString(), ctx.cp.stringType())
+            )
+        }
+        initStatements.addAll(argsInit)
         argsDSL.add(UTestStringExpression(str, ctx.stringType))
-        argsDSL.addAll(arrOfStr.map { UTestStringExpression(it.toString(), ctx.stringType) })
+        argsDSL.add(argsArray)
         UTestMethodCall(
             instance = reqDSL,
             method = mName,
