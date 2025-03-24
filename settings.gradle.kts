@@ -57,6 +57,7 @@ include("usvm-jvm-concrete")
 include("usvm-jvm-concrete:usvm-jvm-concrete-api")
 findProject(":usvm-jvm-concrete:usvm-jvm-concrete-api")?.name = "usvm-jvm-concrete-api"
 include("usvm-jvm-spring")
+include("usvm-jvm-spring:usvm-jvm-spring-test-api")
 include("usvm-jvm-spring-runner")
 
 // Actually, `includeBuild("../jacodb")` is enough, but there is a bug in IDEA when path is a symlink.
