@@ -104,7 +104,7 @@ private fun loadKlawBench(): BenchCp {
 }
 
 private fun loadSynthBench(): BenchCp {
-    val benchDir = Path("C:/Users/arthur/Documents/usvm-spring-benchmarks/build/libs/BOOT-INF")
+    val benchDir = Path("C:/Users/arthu/Documents/usvm-spring-benchmarks/build/libs/BOOT-INF")
     return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib").apply {
         entrypointFilter = { it.enclosingClass.simpleName.startsWith("SpringBenchmarks") }
     }
@@ -286,49 +286,38 @@ private val JcClassOrInterface.jvmDescriptor: String get() = "L${name.replace('.
 
 private fun generateTestClass(benchmark: BenchCp): BenchCp {
     val cp = benchmark.cp
-
+    
+    val allByAnnotation = { annotationName: String -> 
+        cp.nonAbstractClasses(benchmark.classLocations)
+        .filter { it.annotations.any { annotation -> annotation.name == annotationName } }
+        .toList() 
+    }
+    
     val dir = Path(System.getProperty("generatedDir"))
     dir.createDirectories()
 
     val repositoryType = cp.findClass("org.springframework.data.repository.Repository")
     val importAnnotation = cp.findClass("org.springframework.context.annotation.Import")
     val mockAnnotation = cp.findClass("org.springframework.boot.test.mock.mockito.MockBean")
-    val securityConfigs = cp.nonAbstractClasses(benchmark.classLocations)
-        .filter {
-            it.annotations.any { annotation ->
-                annotation.name == "org.springframework.security.config.annotation.web.configuration.EnableWebSecurity"
-            }
-        }.toList()
+    val securityConfigs = allByAnnotation("org.springframework.security.config.annotation.web.configuration.EnableWebSecurity")
     val repositories = runBlocking { cp.hierarchyExt() }
         .findSubClasses(repositoryType, entireHierarchy = true, includeOwn = false)
         .filter { benchmark.classLocations.contains(it.declaration.location.jcLocation) }
-        .toList()
-    val nonAbstractClasses = cp.nonAbstractClasses(benchmark.classLocations)
-    val services =
-        nonAbstractClasses
-            .filter {
-                it.annotations.any { annotation ->
-                    annotation.name == "org.springframework.stereotype.Service"
-                }
-            }.toList()
+        .toList() + allByAnnotation("org.springframework.stereotype.Repository")
+    
+    val services = allByAnnotation("org.springframework.stereotype.Service")
     val mockBeans = repositories + services
     val testClass = cp.findClass("generated.org.springframework.boot.TestClass")
 
-    val webApplicationPackage =
-        nonAbstractClasses
-            .find {
-                it.annotations.any { annotation ->
-                    annotation.name == "org.springframework.boot.autoconfigure.SpringBootApplication"
-                }
-            }?.packageName
-            ?: throw IllegalArgumentException("No entry classes found (with SpringBootApplication annotation)")
+    val webApplicationPackage = allByAnnotation("org.springframework.boot.autoconfigure.SpringBootApplication")
+        .firstOrNull()?.packageName
+        ?: throw IllegalArgumentException("No entry classes found (with SpringBootApplication annotation)")
     val entryPackagePath = webApplicationPackage.replace('.', '/')
 
     val testClassName = "StartSpringTestClass"
     val testClassFullName = "$entryPackagePath/$testClassName"
 
     testClass.withAsmNode { classNode ->
-//        classNode.visibleAnnotations = listOf()
         classNode.name = testClassFullName
         mockBeans.forEach { mockBeanType ->
             val name = mockBeanType.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }

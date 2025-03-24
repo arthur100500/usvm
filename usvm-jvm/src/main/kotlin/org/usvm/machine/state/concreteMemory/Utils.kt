@@ -1,17 +1,7 @@
 package org.usvm.machine.state.concreteMemory
 
 import bench.JcLambdaFeature
-import org.jacodb.api.jvm.ClassSource
-import org.jacodb.api.jvm.JcArrayType
-import org.jacodb.api.jvm.JcByteCodeLocation
-import org.jacodb.api.jvm.JcClassOrInterface
-import org.jacodb.api.jvm.JcClassType
-import org.jacodb.api.jvm.JcField
-import org.jacodb.api.jvm.JcMethod
-import org.jacodb.api.jvm.JcType
-import org.jacodb.api.jvm.JcTypedField
-import org.jacodb.api.jvm.JcTypedMethod
-import org.jacodb.api.jvm.RegisteredLocation
+import org.jacodb.api.jvm.*
 import org.jacodb.api.jvm.cfg.JcRawCallInst
 import org.jacodb.api.jvm.cfg.JcRawStaticCallExpr
 import org.jacodb.api.jvm.ext.allSuperHierarchy
@@ -20,7 +10,6 @@ import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.api.jvm.ext.superClasses
 import org.jacodb.api.jvm.ext.toType
-import org.jacodb.api.jvm.throwClassNotFound
 import org.jacodb.approximation.Approximations
 import org.jacodb.approximation.JcEnrichedVirtualField
 import org.jacodb.approximation.JcEnrichedVirtualMethod
@@ -527,6 +516,10 @@ internal val JcClassOrInterface.isSpringController: Boolean
         it.name == "org.springframework.stereotype.Controller"
                 || it.name == "org.springframework.web.bind.annotation.RestController"
     }
+
+internal fun JcClassOrInterface.isSpringRepository(cp: JcClasspath) = 
+    this.annotations.any { it.name == "org.springframework.stereotype.Repository" } 
+            || cp.findClassOrNull("org.springframework.data.repository.Repository")?.let { isSubClassOf(it) } ?: false
 
 internal fun JcContext.classesOfLocations(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> {
     return locations

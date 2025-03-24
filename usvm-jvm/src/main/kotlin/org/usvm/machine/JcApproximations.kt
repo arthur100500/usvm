@@ -34,7 +34,6 @@ import org.jacodb.api.jvm.ext.ifArrayGetElementType
 import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.api.jvm.ext.isEnum
-import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.api.jvm.ext.long
 import org.jacodb.api.jvm.ext.objectClass
 import org.jacodb.api.jvm.ext.objectType
@@ -115,6 +114,7 @@ import org.usvm.machine.state.JcSpringState
 import org.usvm.machine.state.concreteMemory.allInstanceFields
 import org.usvm.machine.state.concreteMemory.classesOfLocations
 import org.usvm.machine.state.concreteMemory.isSpringController
+import org.usvm.machine.state.concreteMemory.isSpringRepository
 import org.usvm.machine.state.concreteMemory.javaName
 import org.usvm.machine.state.concreteMemory.toJcType
 import org.usvm.machine.state.pinnedValues.JcPinnedKey
@@ -202,9 +202,8 @@ class JcMethodApproximationResolver(
         if (className.contains("org.springframework.boot")) {
             if (approximateSpringBootMethod(methodCall)) return true
         }
-
-        val repositoryType = ctx.cp.findClassOrNull("org.springframework.data.repository.Repository")
-        if (repositoryType != null && enclosingClass.isSubClassOf(repositoryType)) {
+        
+        if (enclosingClass.isSpringRepository(ctx.cp)) {
             if (approximateSpringRepositoryMethod(methodCall)) return true
         }
 
@@ -628,19 +627,19 @@ class JcMethodApproximationResolver(
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldSkipPath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path != "/service/gen_graph_node"
+        return path != "/service/link_node"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
         return controllerType.annotations.any {
-            // TODO: support conditional controllers and dependend conditional beans
+            // TODO: support conditional controllers and dependent conditional beans
             it.name == "org.springframework.boot.autoconfigure.condition.ConditionalOnProperty"
         }
     }
 
     private fun getRequestMappingMethod(annotation: JcAnnotation): String {
         val values = annotation.values
-        // TODO: suppport list #CM
+        // TODO: support list #CM
         val method = (values["method"] as List<*>)[0] as JcField
         return method.name.uppercase()
     }
