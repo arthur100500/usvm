@@ -7,6 +7,7 @@ import org.jacodb.api.jvm.ext.findClass
 import org.objectweb.asm.tree.ClassNode
 import org.usvm.instrumentation.instrumentation.JcRuntimeTraceInstrumenter
 import org.usvm.instrumentation.testcase.descriptor.StaticDescriptorsBuilder
+import org.usvm.instrumentation.util.TestTaskExecutor
 import org.usvm.instrumentation.util.URLClassPathLoader
 import org.usvm.instrumentation.util.invokeWithAccessibility
 import org.usvm.jvm.util.isFinal
@@ -73,7 +74,7 @@ class WorkerClassLoader(
             try {
                 cl.declaredMethods
                     .find { it.name == JcRuntimeTraceInstrumenter.GENERATED_CLINIT_NAME }
-                    ?.invokeWithAccessibility(null, listOf())
+                    ?.invokeWithAccessibility(null, listOf(), TestTaskExecutor())
             } catch (e: Throwable) {
                 //cannot access some classes, for example, enums
             }

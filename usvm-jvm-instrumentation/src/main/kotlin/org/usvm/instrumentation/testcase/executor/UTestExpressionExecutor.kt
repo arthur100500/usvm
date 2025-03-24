@@ -11,6 +11,7 @@ import org.usvm.instrumentation.mock.MockHelper
 import org.usvm.test.api.*
 import org.usvm.instrumentation.collector.trace.MockCollector
 import org.usvm.instrumentation.collector.trace.MockCollector.MockValueArrayWrapper
+import org.usvm.instrumentation.util.TestTaskExecutor
 import java.lang.ClassCastException
 import java.lang.IllegalArgumentException
 import org.usvm.instrumentation.util.invokeWithAccessibility
@@ -33,6 +34,7 @@ class UTestExpressionExecutor(
 
     private val executedUTestInstructions: MutableMap<UTestInst, Any?> = hashMapOf()
     val objectToInstructionsCache: MutableList<Pair<Any?, UTestInst>> = mutableListOf()
+    private val taskExecutor = TestTaskExecutor(workerClassLoader)
 
     fun removeFromCache(uTestInst: UTestInst) = executedUTestInstructions.remove(uTestInst)
 
@@ -300,7 +302,7 @@ class UTestExpressionExecutor(
     private fun executeUTestStaticMethodCall(uTestStaticMethodCall: UTestStaticMethodCall): Any? {
         val jMethod = uTestStaticMethodCall.method.toJavaMethod(workerClassLoader)
         val args = uTestStaticMethodCall.args.map { exec(it) }
-        return jMethod.invokeWithAccessibility(null, args, workerClassLoader)
+        return jMethod.invokeWithAccessibility(null, args, taskExecutor)
     }
 
     private fun executeUTestCastExpression(uTestCastExpression: UTestCastExpression): Any? {
@@ -319,7 +321,7 @@ class UTestExpressionExecutor(
     private fun executeConstructorCall(uConstructorCall: UTestConstructorCall): Any {
         val jConstructor = uConstructorCall.method.toJavaConstructor(workerClassLoader)
         val args = uConstructorCall.args.map { exec(it) }
-        return jConstructor.newInstanceWithAccessibility(args, workerClassLoader)
+        return jConstructor.newInstanceWithAccessibility(args, taskExecutor)
     }
 
     private fun executeMethodCall(uMethodCall: UTestMethodCall): Any? {
@@ -327,9 +329,9 @@ class UTestExpressionExecutor(
         val args = uMethodCall.args.map { exec(it) }
         return with(uMethodCall.method) {
             if (isConstructor) {
-                toJavaConstructor(workerClassLoader).newInstanceWithAccessibility(args, workerClassLoader)
+                toJavaConstructor(workerClassLoader).newInstanceWithAccessibility(args, taskExecutor)
             } else {
-                toJavaMethod(workerClassLoader).invokeWithAccessibility(instance, args, workerClassLoader)
+                toJavaMethod(workerClassLoader).invokeWithAccessibility(instance, args, taskExecutor)
             }
         }
     }
