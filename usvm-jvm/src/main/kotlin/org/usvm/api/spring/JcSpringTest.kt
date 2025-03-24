@@ -1,6 +1,5 @@
 package org.usvm.api.spring
 
-import jakarta.servlet.http.Cookie
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcType
@@ -10,11 +9,8 @@ import org.usvm.machine.state.JcState
 
 import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.findMethodOrNull
-import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.findType
-import org.springframework.mock.web.MockServletContext
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.usvm.UExpr
 import org.usvm.USort
 import org.usvm.api.util.JcTestStateResolver.ResolveMode
@@ -26,10 +22,6 @@ import org.usvm.machine.state.pinnedValues.JcSpringPinnedValue
 import org.usvm.test.api.UTest
 import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestInst
-import org.usvm.test.api.UTestIntExpression
-import org.usvm.test.api.UTestMockObject
-import org.usvm.test.api.UTestStatement
-import java.nio.charset.Charset
 
 
 fun JcClasspath.findJcMethod(cName: String, mName: String): JcTypedMethod {
@@ -50,7 +42,7 @@ class SpringExn
 class JcSpringTest private constructor(
     val ctx: JcContext,
     val generatedTestClass: JcClassType,
-    private val mocks: Pair<List<JcMockBean>, List<UTestInst>>,
+    private val mocks: List<JcMockBean>,
     private val request: JcSpringRequest,
     private val response: JcSpringResponse?,
     private val exception: SpringExn?,
@@ -125,7 +117,7 @@ class JcSpringTest private constructor(
             return JcSpringResponse(response)
         }
 
-        private fun getSpringMocks(state: JcSpringState): Pair<List<JcMockBean>, List<UTestInst>> {
+        private fun getSpringMocks(state: JcSpringState): List<JcMockBean> {
             val resolver = createExprResolver(state)
             return resolver.withMode(REQUEST_MOD) {
                 return@withMode JcMockBean.ofPinnedValues(state.pinnedValues, resolver)
@@ -154,10 +146,6 @@ class JcSpringTest private constructor(
             fromField = generatedTestClass.fields.first { it.name.contains("mockMvc") }.field //TODO: mb error here
         ).also { initStatements.addAll(it.getInitDSL()) }
 
-        initStatements.addAll(mocks.second)
-        val mocks = generateMocksDSL(mocks.first, testExecBuilder.getTestClassInstance())
-        initStatements.addAll(mocks)
-
         val reqDSL = generateReqDSL(request).let { (reqDSL, reqInitDSL) ->
             initStatements.addAll(reqInitDSL)
             reqDSL
@@ -169,6 +157,10 @@ class JcSpringTest private constructor(
             matchersDSL
         }
         matchersDSL.forEach { testExecBuilder.addAndExpectCall(listOf(it)) }
+
+        initStatements.addAll(exprResolver.getInstructions())
+        val mocks = generateMocksDSL(mocks, testExecBuilder.getTestClassInstance())
+        initStatements.addAll(mocks)
 
         return UTest(
             initStatements = initStatements,

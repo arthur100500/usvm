@@ -5,8 +5,6 @@ import org.jacodb.api.jvm.ext.toType
 import org.usvm.machine.state.pinnedValues.JcObjectPinnedKey
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValueSource
 import org.usvm.machine.state.pinnedValues.JcSpringPinnedValues
-import org.usvm.test.api.UTest
-import org.usvm.test.api.UTestInst
 import org.usvm.test.api.UTestMockObject
 
 class JcMockBean(private val origin: UTestMockObject) {
@@ -18,7 +16,7 @@ class JcMockBean(private val origin: UTestMockObject) {
         fun ofPinnedValues(
             pinnedValues: JcSpringPinnedValues,
             exprResolver: JcSpringTestExprResolver
-        ): Pair<List<JcMockBean>, List<UTestInst>> {
+        ): List<JcMockBean> {
             // TODO: Also fields #AA
             val mocks = pinnedValues.getValuesOfSource<JcObjectPinnedKey<JcMethod>>(JcSpringPinnedValueSource.MOCK_RESULT)
             val distinctMocks = mocks.entries.mapNotNull { it.key.getObj()?.enclosingClass }.distinct()
@@ -32,7 +30,7 @@ class JcMockBean(private val origin: UTestMockObject) {
                     distinctMethods
                 )
             }
-            return testMockObjects.map { JcMockBean(it) } to exprResolver.getInstructions()
+            return testMockObjects.map { JcMockBean(it) }
         }
     }
 }
