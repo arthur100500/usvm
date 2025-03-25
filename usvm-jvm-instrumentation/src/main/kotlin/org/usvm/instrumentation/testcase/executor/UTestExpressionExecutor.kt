@@ -60,7 +60,6 @@ class UTestExpressionExecutor(
 
     private val jcClasspath = workerClassLoader.jcClasspath
 
-
     private val executedUTestInstructions: MutableMap<UTestInst, Any?> = hashMapOf()
     val objectToInstructionsCache: MutableList<Pair<Any?, UTestInst>> = mutableListOf()
 
