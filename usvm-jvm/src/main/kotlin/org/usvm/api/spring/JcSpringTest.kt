@@ -24,8 +24,15 @@ import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestInst
 
 
-fun JcClasspath.findJcMethod(cName: String, mName: String): JcTypedMethod {
-    val method = this.findClass(cName).toType().findMethodOrNull { it.name == mName }
+
+fun JcClasspath.findJcMethod(cName: String, mName: String, parametersTypeNames: List<String>? = null): JcTypedMethod {
+    val method = this.findClass(cName)
+        .toType()
+        .findMethodOrNull { method -> method.name == mName
+                && (parametersTypeNames == null
+                || parametersTypeNames.size == method.parameters.size
+                && parametersTypeNames.mapIndexed { i, t -> method.parameters[i].type.typeName == t }.all { it } )
+        }
     method?.let { return it }
     throw MethodNotFoundException("$mName not found")
 }
@@ -172,7 +179,7 @@ class JcSpringTest private constructor(
         val matchersBuilder = SpringMatchersDSLBuilder(ctx)
 
         matchersBuilder.addStatusCheck(res.getStatusCode())
-        matchersBuilder.addContentCheck(res.getContentAsString())
+        res.getContentAsString()?.let { matchersBuilder.addContentCheck(it) }
         matchersBuilder.addHeadersCheck(res.getHeaders())
 //      TODO("add more matchers")
 

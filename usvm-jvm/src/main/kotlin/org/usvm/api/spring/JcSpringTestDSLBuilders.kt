@@ -3,6 +3,7 @@
 import org.jacodb.api.jvm.JcClassType
 import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.int
 import org.usvm.jvm.util.stringType
 import org.usvm.machine.JcContext
@@ -168,10 +169,16 @@ class SpringMatchersDSLBuilder(
         return matcherDsl
     }
 
-    private fun addCondition(matcherSourceDsl: UTestCall, conditionName: String, conditionArguments: List<Any> = listOf()): UTestExpression {
+    private fun addCondition(
+        matcherSourceDsl: UTestCall,
+        conditionName: String,
+        conditionArguments: List<Any> = listOf(),
+        conditionParameterTypeNames: List<String>? = null
+    ): UTestExpression {
         val conditionMethod = ctx.cp.findJcMethod(
             matcherSourceDsl.method!!.returnType.typeName,
-            conditionName
+            conditionName,
+            conditionParameterTypeNames
         ).method
 
         val conditionDsl = UTestMethodCall(
@@ -195,7 +202,11 @@ class SpringMatchersDSLBuilder(
 
     fun addHeadersCheck(headers: List<JcSpringHttpHeader>): SpringMatchersDSLBuilder {
         val matcher = addMatcher("header")
-        headers.forEach { addCondition(matcher, "stringValues", listOf(it.getName(), it.getValues())) }
+        headers.forEach { addCondition(
+            matcher,
+            "stringValues",
+            listOf(it.getName(), it.getValues()),
+            listOf("java.lang.String", "java.lang.String[]")) }
         return this
     }
 
