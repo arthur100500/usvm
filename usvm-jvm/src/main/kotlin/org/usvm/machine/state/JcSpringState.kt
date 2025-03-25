@@ -85,6 +85,10 @@ class JcSpringState(
         return pinnedValues.createIfAbsent(key, type, scope, sort, nullable)
     }
 
+    fun createPinnedAndReplace(key: JcPinnedKey, type: JcType, scope: JcStepScope, sort: USort, nullable: Boolean = true): JcSpringPinnedValue? {
+        return pinnedValues.createAndReplace(key, type, scope, sort, nullable)
+    }
+
     fun getPinnedValueKey(expr: UExpr<out USort>): JcPinnedKey? {
         return pinnedValues.getKeyOfExpr(expr)
     }

@@ -23,7 +23,7 @@ abstract class JcPinnedKey(
 }
 
 class JcSimplePinnedKey(
-    source: JcSpringPinnedValueSource,
+    private val source: JcSpringPinnedValueSource,
 ) : JcPinnedKey(source) {
 
     override fun hashCode(): Int {
@@ -36,10 +36,14 @@ class JcSimplePinnedKey(
         other as JcSimplePinnedKey
         return getSource() == other.getSource()
     }
+
+    override fun toString(): String {
+        return source.name
+    }
 }
 
 class JcObjectPinnedKey<T>(
-    source: JcSpringPinnedValueSource,
+    private val source: JcSpringPinnedValueSource,
     private val obj: T? = null,
 ) : JcPinnedKey(source) {
 
@@ -55,6 +59,10 @@ class JcObjectPinnedKey<T>(
     }
 
     fun getObj() = obj
+
+    override fun toString(): String {
+        return "${source.name} ($obj)"
+    }
 }
 
 class JcStringPinnedKey(
