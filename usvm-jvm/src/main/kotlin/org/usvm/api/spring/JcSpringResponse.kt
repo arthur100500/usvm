@@ -18,19 +18,19 @@ class JcSpringResponse(private val response: Any) {
 
     fun getStatusCode(): Int = getFromMethod("getStatus")
 
-    // TODO: Will not work on HttpServletResonse interface #AA
+    // TODO: Will not work on HttpServletResponse interface #AA
     fun getErrorMessage(): String = getFromMethod("getErrorMessage")
 
-    // TODO: Will not work on HttpServletResonse interface #AA
+    // TODO: Will not work on HttpServletResponse interface #AA
     fun getContentLength(): Int = getFromMethod("getContentLength")
 
-    // TODO: Will not work on HttpServletResonse interface #AA
+    // TODO: Will not work on HttpServletResponse interface #AA
     fun getCookies(): List<JcSpringHttpCookie> {
         val rawCookies = getFromMethod("getCookies") as Array<Any>? ?: arrayOf()
         return rawCookies.map { JcSpringHttpCookie.ofCookieObject(it) }
     }
 
-    fun getContentAsString(): String = getFromMethod("getContentAsString")
+    fun getContentAsString(): String? = getFromMethod("getContentAsString")
 
     fun getHeaders(): List<JcSpringHttpHeader> {
         val headersNames = getFromMethod("getHeaderNames") as Collection<String>
