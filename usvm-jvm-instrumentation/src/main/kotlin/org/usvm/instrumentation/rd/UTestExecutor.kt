@@ -30,10 +30,6 @@ abstract class UTestExecutor(
 ) {
 
     fun executeUTest(uTest: UTest): UTestExecutionResult {
-        when (InstrumentationModuleConstants.testExecutorStaticsRollbackStrategy) {
-            StaticsRollbackStrategy.HARD -> workerClassLoader = createWorkerClassLoader()
-            else -> {}
-        }
         reset()
         val taskExecutor = JcExecutor(workerClassLoader)
         val accessedStatics = mutableSetOf<Pair<JcField, JcInstructionTracer.StaticFieldAccessType>>()
@@ -100,7 +96,7 @@ abstract class UTestExecutor(
         staticsToRemoveFromInitState.forEach { initExecutionState.statics.remove(it) }
 
         when (InstrumentationModuleConstants.testExecutorStaticsRollbackStrategy) {
-            StaticsRollbackStrategy.ROLLBACK -> staticDescriptorsBuilder.rollBackStatics()
+            StaticsRollbackStrategy.ROLLBACK -> staticDescriptorsBuilder!!.rollBackStatics()
             StaticsRollbackStrategy.REINIT -> workerClassLoader.reset(accessedStaticsFields, taskExecutor)
             else -> Unit
         }
@@ -140,6 +136,11 @@ abstract class UTestExecutor(
     )
 
     private fun reset() {
+        when (InstrumentationModuleConstants.testExecutorStaticsRollbackStrategy) {
+            StaticsRollbackStrategy.HARD -> workerClassLoader = createWorkerClassLoader()
+            else -> Unit
+        }
+
         initStateDescriptorBuilder = Value2DescriptorConverter(
             workerClassLoader = workerClassLoader,
             previousState = null
