@@ -587,14 +587,14 @@ class JcSpringMethodApproximationResolver (
         }.toList()
     }
 
-    private fun allControllerPaths(stateToFill: JcSpringState): List<List<Any>> {
+    private fun allControllerPaths(stateToFill: JcSpringState): ArrayList<ArrayList<Any>> {
         val handlerData = getHandlerData()
         stateToFill.handlerData = handlerData
 
         return handlerData
             .filterNot {shouldSkipPath(it.pathTemplate, it.handler.name, it.controller.name)}
-            .map { listOf(it.controller.name, it.handler.name, it.pathTemplate, it.uriVariablesCount, it.allowedMethods.first()) }
-            .toList()
+            .map { arrayListOf<Any>(it.controller.name, it.handler.name, it.pathTemplate, it.uriVariablesCount, it.allowedMethods.first()) }
+            .let { ArrayList(it) }
     }
 
 
