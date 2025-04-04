@@ -28,7 +28,8 @@ class SpringTestReproducer(
             testingProjectClasspath = locations.joinToString(File.pathSeparator),
             jcClasspath = cp,
             timeout = Duration.INFINITE,
-            opts = opts
+            opts = opts,
+            2
         )
         runBlocking { executor.ensureRunnerAlive() }
         return executor
