@@ -4,6 +4,7 @@ import machine.state.JcSpringState
 import org.jacodb.api.jvm.JcMethod
 import org.usvm.statistics.UMachineObserver
 import org.usvm.test.api.UTest
+import testGeneration.JcSpringTestExprResolver
 import testGeneration.canGenerateTest
 import testGeneration.generateTest
 import testGeneration.getHandlerMethod
@@ -26,10 +27,14 @@ class JcSpringTestObserver(
     override fun onStateTerminated(state: JcSpringState, stateReachable: Boolean) {
         state.callStack.push(state.entrypoint, state.entrypoint.instList[0])
         if (!stateReachable || !state.hasEnoughInfoForTest()) return
+        // TODO: Remove it and move generation inside
+        val debugExprResolver = JcSpringTestExprResolver(state)
+        val debugRenderedValues = state.pinnedValues.getMap().map { it.key to debugExprResolver.resolvePinnedValue(it.value) }
+        if (!state.canGenerateTest()) return
+        val test = state.generateTest()
         try {
-            if (!state.canGenerateTest()) return
-            testRenderer.render(state.generateTest(), state.getHandlerMethod(), state.isExceptional)
-            val success = testReproducer.reproduce(state.generateTest())
+            testRenderer.render(test, state.getHandlerMethod(), state.isExceptional)
+            val success = testReproducer.reproduce(test)
             println("Test success: $success")
         } catch (e: Throwable) {
             println("generation failed with $e")

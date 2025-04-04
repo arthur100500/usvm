@@ -67,7 +67,7 @@ private fun createExprResolver(state: JcSpringState): JcSpringTestExprResolver {
 
 private fun getGeneratedClassName(cp: JcClasspath): JcClassType {
     // TODO hardcoded
-    val cl = cp.findClassOrNull("org.usvm.spring.benchmarks.StartSpringTestClass") //TODO: get it from state? (it is generated in runtime)
+    val cl = cp.findClassOrNull("org.springframework.samples.petclinic.StartSpringTestClass") //TODO: get it from state? (it is generated in runtime)
     check(cl != null)
     return cl.toType()
 }
