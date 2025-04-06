@@ -37,7 +37,7 @@ class JcSpringPinnedValuesRequest(
 
         return uriVariableNames.map {
             uriVariables[it] ?: placeholder
-        }.also { assert(it.size == uriVariables.size) }
+        }
     }
 
     private fun collectAndResolve(pinnedValueSource: JcSpringPinnedValueSource): Map<UTString, UTAny> {
