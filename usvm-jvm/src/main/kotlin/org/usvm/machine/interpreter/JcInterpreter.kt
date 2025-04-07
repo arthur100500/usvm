@@ -350,6 +350,8 @@ open class JcInterpreter(
     }
 
     private fun visitMethodCall(scope: JcStepScope, stmt: JcMethodCallBaseInst) {
+        // TODO: Debug #AA
+        print(scope.calcOnState { "[$id]" })
         callMethod(scope, stmt, exprResolverWithScope(scope))
     }
 

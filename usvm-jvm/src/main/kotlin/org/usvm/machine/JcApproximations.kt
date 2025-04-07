@@ -189,7 +189,24 @@ open class JcMethodApproximationResolver(
             if (approximateObjectClone(methodCall)) return true
         }
 
+        if (className == "java.lang.String") {
+            if (approximateStringMethod(methodCall)) return true
+        }
+
         return approximateEmptyNativeMethod(methodCall)
+    }
+
+    private fun approximateStringMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "equals") {
+            return scope.calcOnState {
+                val first = arguments[0].asExpr(ctx.addressSort)
+                val second = arguments[1].asExpr(ctx.addressSort)
+                val result = stringEquals(first, second)
+                skipMethodInvocationWithValue(methodCall, result)
+                return@calcOnState true
+            }
+        }
+        return false
     }
 
     private fun approximateStaticMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
