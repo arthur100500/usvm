@@ -24,7 +24,8 @@ class UTestConcreteExecutor(
     testingProjectClasspath: String,
     private val jcClasspath: JcClasspath,
     private val timeout: Duration,
-    private val opts: UTestExecutionOptions = UTestExecutionOptions()
+    private val opts: UTestExecutionOptions = UTestExecutionOptions(),
+    memoryLimit: Int = 1
 ) : AutoCloseable {
 
     constructor(
@@ -47,7 +48,8 @@ class UTestConcreteExecutor(
             jcClasspath,
             instrumentationClassFactory,
             opts.instrumentedClasses,
-            opts.execMode
+            opts.execMode,
+            memoryLimit
         )
     private val uTestUnexpectedExecutionBuilder = UTestUnexpectedExecutionBuilder(jcClasspath)
 
