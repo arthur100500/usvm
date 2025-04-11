@@ -430,6 +430,7 @@ private fun reproduceTests(
         val rendered = testRenderer.render(testInfo.test, testInfo.method, testInfo.isExceptional)
         val reproduced = testReproducer.reproduce(testInfo.test)
         reproducingResults[testInfo.method] = rendered to reproduced
+        println("${testInfo.method.name} Test success: $reproduced")
     }
 
     testReproducer.kill()
