@@ -5,6 +5,8 @@ import org.usvm.instrumentation.executor.UTestConcreteExecutor
 import org.usvm.instrumentation.executor.UTestExecutionOptions
 import org.usvm.instrumentation.instrumentation.NoInstrumentationFactory
 import org.usvm.instrumentation.rd.InstrumentedProcess
+import org.usvm.instrumentation.testcase.api.UTestExecutionFailedResult
+import org.usvm.instrumentation.testcase.api.UTestExecutionInitFailedResult
 import org.usvm.instrumentation.testcase.api.UTestExecutionSuccessResult
 import org.usvm.test.api.UTest
 import java.io.File
@@ -33,12 +35,18 @@ class SpringTestReproducer(
 
     private var executor: UTestConcreteExecutor? = null
 
-    fun reproduce(test: UTest): Boolean {
+    fun reproduce(test: UTest): String {
         if (executor == null)
             executor = createExecutor()
 
         val result = executor!!.executeSync(test)
-        return result is UTestExecutionSuccessResult
+        if (result is UTestExecutionFailedResult)
+            return result.cause.message
+        if (result is UTestExecutionInitFailedResult)
+            return result.cause.message
+        if (result is UTestExecutionSuccessResult)
+            return "success"
+        return result.toString()
     }
 
     fun kill() {

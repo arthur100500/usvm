@@ -65,6 +65,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.walk
 import kotlin.system.exitProcess
@@ -424,7 +425,7 @@ private fun reproduceTests(
 ) {
     val testReproducer by lazy { SpringTestReproducer(jcConcreteMachineOptions, cp) }
     val testRenderer by lazy { SpringTestRenderer(cp) }
-    val reproducingResults = mutableMapOf<JcMethod, Pair<String, Boolean>>()
+    val reproducingResults = mutableMapOf<JcMethod, Pair<String, String>>()
 
     for (testInfo in tests) {
         val rendered = testRenderer.render(testInfo.test, testInfo.method, testInfo.isExceptional)
@@ -435,22 +436,21 @@ private fun reproduceTests(
 
     testReproducer.kill()
 
-    println("Tests count: ${tests.size}")
-    val notReproduced = reproducingResults.filter { (_, value) -> !value.second }
-    if (notReproduced.isEmpty()) {
-        println("All reproduced")
-        return
-    }
+    val notReproduced = reproducingResults.filter { (_, value) -> value.second != "success" }
+    check(notReproduced.isEmpty()) {
+        for ((method, value) in notReproduced) {
+            val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\Bad tests\\${method.name}.java")
+            val file = if (testFilePath.exists()) testFilePath.toFile() else testFilePath.createFile().toFile()
 
-    println("Reproduced ${tests.size - notReproduced.size} of ${tests.size} tests")
-    var sb = StringBuilder()
-    sb = sb.appendLine("Not reproduced tests:")
-    for ((method, value) in notReproduced) {
-        sb = sb.appendLine("$method:")
-        sb = sb.appendLine(value.first)
-    }
+            var sb = StringBuilder()
+            sb = sb.appendLine("Not reproduced tests:")
+            sb = sb.appendLine("// $method:")
+            sb = sb.appendLine("// Problem: ${value.second}")
+            sb = sb.appendLine(value.first)
 
-    println(sb.toString())
+            file.writeText(sb.toString())
+        }
+    }
 }
 
 private fun JcClasspath.nonAbstractClasses(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> =
