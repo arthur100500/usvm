@@ -603,6 +603,7 @@ open class JcConcreteMemory(
         }
 
         check(objParameters.size == parameters.size)
+        print("<|${state.callStack.size}|>")
         if (bindings.isMutableWithEffect()) {
             bindings.effectStorage.ensureStatics()
             println(ansiGreen + "Invoking (B) $signature" + ansiReset)

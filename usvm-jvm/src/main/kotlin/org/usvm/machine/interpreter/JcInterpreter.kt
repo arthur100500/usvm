@@ -278,6 +278,8 @@ open class JcInterpreter(
             is JcConcreteMethodCallInst -> {
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
+                print("<|${scope.calcOnState { callStack.size }}|>")
+
                 if (approximateMethod(scope, stmt)) {
                     println("\u001B[31m" + "Approximated ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                     return
@@ -315,6 +317,7 @@ open class JcInterpreter(
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
                 if (approximateMethod(scope, stmt)) {
+                    print("<|${scope.calcOnState { callStack.size }}|>")
                     println("\u001B[31m" + "Approximated ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                     return
                 }
@@ -333,6 +336,7 @@ open class JcInterpreter(
             }
 
             is JcDynamicMethodCallInst -> {
+                print("<|${scope.calcOnState { callStack.size }}|>")
                 println("\u001B[31m" + "Calling dynamic ${stmt.method.humanReadableSignature}" + "\u001B[0m")
                 observer?.onMethodCallWithResolvedArguments(simpleValueResolver, stmt, scope)
 
