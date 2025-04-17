@@ -425,21 +425,24 @@ private fun reproduceTests(
 ) {
     val testReproducer by lazy { SpringTestReproducer(jcConcreteMachineOptions, cp) }
     val testRenderer by lazy { SpringTestRenderer(cp) }
-    val reproducingResults = mutableMapOf<JcMethod, Pair<String, String>>()
+    val reproducingResults = mutableMapOf<String, Pair<String, String>>()
 
     for (testInfo in tests) {
         val rendered = testRenderer.render(testInfo.test, testInfo.method, testInfo.isExceptional)
         val reproduced = testReproducer.reproduce(testInfo.test)
-        reproducingResults[testInfo.method] = rendered to reproduced
-        println("${testInfo.method.name} Test success: $reproduced")
+        reproducingResults[testInfo.method.name + "${testInfo.stateId}"] = rendered to reproduced
+        println("${testInfo.method.name} Test success: ${reproduced == "success"}")
     }
 
     testReproducer.kill()
 
     val notReproduced = reproducingResults.filter { (_, value) -> value.second != "success" }
-    check(notReproduced.isEmpty()) {
-        for ((method, value) in notReproduced) {
-            val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\Bad tests\\${method.name}.java")
+
+    check(false) {
+        for ((method, value) in reproducingResults) {
+            val folder = if (value.second == "success") "Good tests" else "Bad Tests"
+
+            val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\${folder}\\${method}.java")
             val file = if (testFilePath.exists()) testFilePath.toFile() else testFilePath.createFile().toFile()
 
             var sb = StringBuilder()
