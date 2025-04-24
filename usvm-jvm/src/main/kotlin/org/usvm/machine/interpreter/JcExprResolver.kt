@@ -548,8 +548,9 @@ open class JcExprResolver(
             val heapRef = expr.asExpr(ctx.addressSort)
             val isExpr = scope.calcOnState { memory.types.evalIsSubtype(heapRef, type) }
             scope.assert(isExpr)
-                .logAssertFailure { "JcExprResolver: subtype constraint ${type.typeName}" }
-                ?: return false
+                .logAssertFailure {
+                    "JcExprResolver: subtype constraint ${type.typeName}"
+                } ?: return false
         }
 
         return true
