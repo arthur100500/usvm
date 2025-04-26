@@ -161,6 +161,8 @@ open class JcInterpreter(
         val stmt = state.lastStmt
 
         logger.debug("Step: {}", stmt)
+        
+        println("Step $stmt")
 
         val scope = StepScope(state, forkBlackList)
 
