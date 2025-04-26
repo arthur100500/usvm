@@ -372,7 +372,9 @@ internal val Class<*>.isClassLoader: Boolean
     get() = ClassLoader::class.java.isAssignableFrom(this)
 
 private fun typeNameIsInternal(name: String): Boolean {
-    return name.startsWith("org.usvm.") && !name.startsWith("org.usvm.samples") ||
+    return name.startsWith("org.usvm.")
+            && !name.startsWith("org.usvm.samples")
+            && !name.startsWith("org.usvm.spring.benchmarks") ||
             name.startsWith("runtime.LibSLRuntime") ||
             name.startsWith("runtime.LibSLGlobals") ||
             name.startsWith("generated.") ||
