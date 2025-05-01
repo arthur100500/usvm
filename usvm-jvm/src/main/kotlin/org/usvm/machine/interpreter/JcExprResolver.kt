@@ -1,6 +1,7 @@
 package org.usvm.machine.interpreter
 
 import io.ksmt.expr.KExpr
+import io.ksmt.sort.KBoolSort
 import io.ksmt.utils.asExpr
 import io.ksmt.utils.cast
 import io.ksmt.utils.uncheckedCast
