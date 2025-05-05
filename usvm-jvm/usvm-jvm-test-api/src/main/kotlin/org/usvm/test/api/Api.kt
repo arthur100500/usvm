@@ -56,6 +56,9 @@ class UTestMethodCall(
     }
 
     override val type: JcType? = method.enclosingClass.classpath.findTypeOrNull(method.returnType)
+    override fun toString(): String {
+        return "UTestMethodCall ${method.name}"
+    }
 }
 
 class UTestStaticMethodCall(
@@ -64,6 +67,9 @@ class UTestStaticMethodCall(
 ) : UTestCall {
     override val instance: UTestExpression? = null
     override val type: JcType? = method.enclosingClass.classpath.findTypeOrNull(method.returnType)
+    override fun toString(): String {
+        return "UTestStaticMethodCall ${method.name}"
+    }
 }
 
 class UTestConstructorCall(
