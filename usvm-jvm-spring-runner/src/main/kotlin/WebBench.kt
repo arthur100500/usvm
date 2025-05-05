@@ -437,23 +437,19 @@ private fun reproduceTests(
 
     testReproducer.kill()
 
-    val notReproduced = reproducingResults.filter { (_, value) -> value.second != "success" }
+    for ((method, value) in reproducingResults) {
+        val folder = if (value.second == "success") "Good tests" else "Bad Tests"
 
-    check(false) {
-        for ((method, value) in reproducingResults) {
-            val folder = if (value.second == "success") "Good tests" else "Bad Tests"
+        val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\Tests\\${folder}\\${method}.java")
+        val file = if (testFilePath.exists()) testFilePath.toFile() else testFilePath.createFile().toFile()
 
-            val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\${folder}\\${method}.java")
-            val file = if (testFilePath.exists()) testFilePath.toFile() else testFilePath.createFile().toFile()
+        var sb = StringBuilder()
+        sb = sb.appendLine("Not reproduced tests:")
+        sb = sb.appendLine("// $method:")
+        sb = sb.appendLine("// Problem: ${value.second}")
+        sb = sb.appendLine(value.first)
 
-            var sb = StringBuilder()
-            sb = sb.appendLine("Not reproduced tests:")
-            sb = sb.appendLine("// $method:")
-            sb = sb.appendLine("// Problem: ${value.second}")
-            sb = sb.appendLine(value.first)
-
-            file.writeText(sb.toString())
-        }
+        file.writeText(sb.toString())
     }
 }
 
