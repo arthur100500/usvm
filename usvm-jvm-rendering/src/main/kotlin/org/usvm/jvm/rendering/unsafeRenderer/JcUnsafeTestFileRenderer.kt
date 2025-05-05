@@ -13,7 +13,7 @@ open class JcUnsafeTestFileRenderer : JcTestFileRenderer {
         cu: CompilationUnit,
         importManager: JcUnsafeImportManager,
         cp: JcClasspath,
-        inlineUsvmUtils: Boolean = true
+        inlineUsvmUtils: Boolean = false
     ) : super(cu, importManager, cp) {
         this.shouldInlineUsvmUtils = inlineUsvmUtils
     }
@@ -22,7 +22,7 @@ open class JcUnsafeTestFileRenderer : JcTestFileRenderer {
         packageName: String?,
         importManager: JcUnsafeImportManager,
         cp: JcClasspath,
-        inlineUsvmUtils: Boolean = true
+        inlineUsvmUtils: Boolean = false
     ) : super(packageName, importManager, cp) {
         this.shouldInlineUsvmUtils = inlineUsvmUtils
     }
