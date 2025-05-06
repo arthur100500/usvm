@@ -328,6 +328,11 @@ class UTestExpressionExecutor(
 
     private fun executeUTestStaticMethodCall(uTestStaticMethodCall: UTestStaticMethodCall): Any? {
         val jMethod = uTestStaticMethodCall.method.toJavaMethod(workerClassLoader)
+        // TODO: Move to special UTExpr
+        if (uTestStaticMethodCall.method.name == "assertThrows") {
+            return executeAssertThrows(uTestStaticMethodCall.args)
+        }
+
         val args = uTestStaticMethodCall.args.map { exec(it) }
         return jMethod.invokeWithAccessibility(null, args, taskExecutor)
     }
@@ -363,6 +368,20 @@ class UTestExpressionExecutor(
         }
     }
 
+    private fun executeAssertThrows(args: List<UTestExpression>) {
+        val expectedExceptionType = exec(args[0])
+        try {
+            exec(args[1])
+        } catch (t: Throwable) {
+            val exceptionType = t.javaClass
+            if (expectedExceptionType != exceptionType) {
+                val msg = "Throwable type mismatch, expected: $expectedExceptionType, but got: $exceptionType"
+                throw AssertionError(msg)
+            }
+            return
+        }
+        throw AssertionError("Method did not throw")
+    }
 }
 
 class TestExecutorException(msg: String) : Exception(msg)
