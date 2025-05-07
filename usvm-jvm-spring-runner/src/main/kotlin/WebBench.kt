@@ -114,7 +114,7 @@ private fun loadJHipsterBench(): BenchCp {
 
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadWebPetClinicBench()
+        loadSynthBench()
     }
 
     logTime("Analysis ALL") {
