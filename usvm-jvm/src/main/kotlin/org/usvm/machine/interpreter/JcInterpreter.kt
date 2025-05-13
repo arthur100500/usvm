@@ -26,6 +26,7 @@ import org.jacodb.api.jvm.cfg.JcThis
 import org.jacodb.api.jvm.cfg.JcThrowInst
 import org.jacodb.api.jvm.ext.boolean
 import org.jacodb.api.jvm.ext.cfg.callExpr
+import org.jacodb.api.jvm.ext.humanReadableSignature
 import org.jacodb.api.jvm.ext.isEnum
 import org.jacodb.api.jvm.ext.toType
 import org.usvm.ForkCase
