@@ -32,6 +32,7 @@ import org.usvm.USort
 import org.usvm.api.makeSymbolicPrimitive
 import org.usvm.api.makeSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
+import org.usvm.api.util.JcTestStateResolver
 import org.usvm.api.writeField
 import org.usvm.machine.JcApplicationGraph
 import org.usvm.machine.JcContext
@@ -549,7 +550,7 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path.startsWith("/owners/{ownerId}/pets/{petId}/edit")
+        return true
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
