@@ -5,6 +5,7 @@ import org.usvm.instrumentation.executor.UTestConcreteExecutor
 import org.usvm.instrumentation.executor.UTestExecutionOptions
 import org.usvm.instrumentation.instrumentation.NoInstrumentationFactory
 import org.usvm.instrumentation.rd.InstrumentedProcess
+import org.usvm.instrumentation.testcase.api.UTestExecutionExceptionResult
 import org.usvm.instrumentation.testcase.api.UTestExecutionFailedResult
 import org.usvm.instrumentation.testcase.api.UTestExecutionInitFailedResult
 import org.usvm.instrumentation.testcase.api.UTestExecutionSuccessResult
@@ -47,6 +48,8 @@ class SpringTestReproducer(
             return result.cause.message
         if (result is UTestExecutionSuccessResult)
             return "success"
+        if (result is UTestExecutionExceptionResult)
+            return result.cause.message
         return result.toString()
     }
 
