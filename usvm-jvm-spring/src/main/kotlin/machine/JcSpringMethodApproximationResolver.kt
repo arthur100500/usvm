@@ -33,6 +33,7 @@ import org.usvm.USort
 import org.usvm.api.makeSymbolicPrimitive
 import org.usvm.api.makeSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
+import org.usvm.api.util.JcTestStateResolver
 import org.usvm.api.writeField
 import org.usvm.collection.field.UFieldLValue
 import org.usvm.machine.JcApplicationGraph
