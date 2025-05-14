@@ -549,7 +549,7 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, kind: String, controllerTypeName: String): Boolean {
-        return path.startsWith("/body")
+        return path.startsWith("/owners/{ownerId}/pets/{petId}/edit")
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
