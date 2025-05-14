@@ -381,10 +381,12 @@ open class JcConcreteMemory(
     }
 
     fun getFixedModel(state: JcState): UModelBase<JcType> {
+        check(concretization)
         if (fixedModel != null)
             return fixedModel!!
         state.applySoftConstraints()
         fixedModel = state.models.first()
+        state.models = listOf(fixedModel!!)
         return fixedModel!!
     }
 
