@@ -582,6 +582,7 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, handlerName: String, controllerTypeName: String): Boolean {
+        // skibidi
         return true
     }
 
