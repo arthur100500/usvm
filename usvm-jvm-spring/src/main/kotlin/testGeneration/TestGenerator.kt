@@ -88,7 +88,7 @@ internal fun JcSpringState.generateTest(): SpringTestInfo {
     val uTest = jcSpringTest.build(ctx.cp)
         .generateTestDSL { exprResolver.getInstructions() }
 
-    return SpringTestInfo(handler, isExceptional, uTest)
+    return SpringTestInfo(id, handler, isExceptional, uTest)
 }
 
 private fun getSpringException(

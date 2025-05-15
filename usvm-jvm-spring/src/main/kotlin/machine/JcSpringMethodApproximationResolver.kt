@@ -577,7 +577,7 @@ class JcSpringMethodApproximationResolver (
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, kind: String, controllerTypeName: String): Boolean {
         // skibidi
-        return path == "/complex/matrix_map/{something}"
+        return true
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
