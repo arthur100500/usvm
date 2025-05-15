@@ -98,8 +98,9 @@ class PathNode<Statement> private constructor(
     }
 
     override fun toString(): String =
-        buildString {
-            appendLine(_segment)
-            appendLine(parent)
-        }
+        "PATH NODE"
+//        buildString {
+//            appendLine(_segment)
+//            appendLine(parent)
+//        }
 }
