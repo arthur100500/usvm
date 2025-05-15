@@ -2,6 +2,7 @@ package bench
 
 import SpringTestRenderer
 import SpringTestReproducer
+import analyzeLog
 import features.JcClinitFeature
 import features.JcEncodingFeature
 import features.JcGeneratedTypesFeature
@@ -473,6 +474,8 @@ private fun analyzeBench(benchmark: BenchCp) {
     }
 
     reproduceTests(testObserver.generatedTests, jcConcreteMachineOptions, cp)
+
+    analyzeLog()
 
     exitProcess(0)
 }
