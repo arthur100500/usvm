@@ -296,7 +296,7 @@ abstract class JcTestStateResolver<T>(
 
     private val cpWithoutApproximations by lazy { ctx.cp.cpWithoutApproximations() }
 
-    private fun shouldIgnoreField(typedField: JcTypedField): Boolean {
+    open fun shouldIgnoreField(typedField: JcTypedField): Boolean {
         return typedField.isStatic
                 || typedField.field.annotations.any { it.name == DummyField::class.java.name }
                 || with(cpWithoutApproximations) { !typedField.field.isOriginalField }
