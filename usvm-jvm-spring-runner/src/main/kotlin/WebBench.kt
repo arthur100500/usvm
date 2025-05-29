@@ -115,7 +115,7 @@ private fun loadJHipsterBench(): BenchCp {
 
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadSynthBench()
+        loadWebPetClinicBench()
     }
 
     logTime("Analysis ALL") {
@@ -452,7 +452,7 @@ private fun analyzeBench(benchmark: BenchCp) {
         typeOperationsTimeout = Duration.INFINITE, // we do not need the timeout for type operations in tests
     )
     val jcMachineOptions = JcMachineOptions(
-        forkOnImplicitExceptions = false,
+        forkOnImplicitExceptions = true,
         arrayMaxSize = 10_000,
     )
 
@@ -512,9 +512,14 @@ private fun reproduceTests(
     val notReproducedTests = mutableListOf<Pair<UTest, JcSpringMvcTestInfo>>()
     for (testInfo in tests) {
         val reproduced = testReproducer.reproduce(testInfo.test)
-        if (reproduced)
+        if (reproduced == "success")
             reproducedTests.add(testInfo.toRenderInfo())
-        else notReproducedTests.add(testInfo.toRenderInfo())
+        else {
+            println(testInfo.stateId)
+            println(reproduced)
+            println(testRenderer.render(testInfo.test, testInfo.method, testInfo.isExceptional))
+            notReproducedTests.add(testInfo.toRenderInfo())
+        }
     }
     testReproducer.kill()
 
@@ -526,8 +531,7 @@ private fun reproduceTests(
     val notReproducedDir = generatedTestsDir.resolve("notReproduced")
     createOrClear(notReproducedDir)
 
-    renderTests(testRenderer, reproducedTests, reproducedDir)
-    renderTests(testRenderer, notReproducedTests, notReproducedDir)
+    renderTests(testRenderer, reproducedTests + notReproducedTests, notReproducedDir)
 
     println("Reproduced ${reproducedTests.size} of ${tests.size} tests")
 }

@@ -60,6 +60,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springVersion")
     implementation("org.apache.xmlbeans:xmlbeans:5.2.1")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf:$springVersion")
+    implementation("org.usvm.approximations.java.stdlib:approximations:0.0.0")
 }
 
 val springTestDeps by configurations.creating
