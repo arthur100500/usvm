@@ -699,7 +699,7 @@ abstract class JcTestStateResolver<T>(
                 }
             }
 
-        private const val MAX_ARRAY_LENGTH = 10_000
+        private const val MAX_ARRAY_LENGTH = 10
 
         @PublishedApi
         internal val CYCLIC_REF_STUB = Any()

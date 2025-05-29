@@ -51,7 +51,6 @@ class DatabaseGenerator(
     val newBodyContext = JcMethodNewBodyContext(clinitMethod)
 
     fun generateJPADatabase(needTrack: Boolean): JcTableInfoCollector {
-
         // TODO: Remove filter #AA #SM
         repositories.filter { it.signature != null }.forEach { repo ->
             val genericTypes = repo.signature!!.genericTypesFromSignature
