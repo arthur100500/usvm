@@ -12,6 +12,7 @@ import org.usvm.UTrue
 import org.usvm.machine.state.JcState
 import org.usvm.model.UModelBase
 import org.usvm.solver.USatResult
+import org.usvm.utils.applySoftConstraints
 
 class JcConcreteStateForker(
     private val baseStateForker: StateForker,
@@ -70,6 +71,7 @@ class JcConcreteStateForker(
         val ctx = state.ctx
         val solver = ctx.solver<Type>()
         for ((idx, condition) in conditions.withIndex()) {
+            state.applySoftConstraints()
             val currentPs = (state as T).pathConstraints.clone()
             for (constraint in memory.concretizationConstraints)
                 currentPs += constraint
