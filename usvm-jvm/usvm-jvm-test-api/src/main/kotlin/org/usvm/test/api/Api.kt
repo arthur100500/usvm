@@ -65,7 +65,7 @@ class UTestMethodCall(
 
     override val type: JcType? = method.enclosingClass.classpath.findTypeOrNull(method.returnType)
     override fun toString(): String {
-        return "UTestMethodCall ${method.name}"
+        return "${instance}.${method.name}(${args.joinToString(", ")})"
     }
 }
 
@@ -76,7 +76,7 @@ class UTestStaticMethodCall(
     override val instance: UTestExpression? = null
     override val type: JcType? = method.enclosingClass.classpath.findTypeOrNull(method.returnType)
     override fun toString(): String {
-        return "UTestStaticMethodCall ${method.name}"
+        return "${method.enclosingClass.simpleName}.${method.name}(${args.joinToString(", ")})"
     }
 }
 
@@ -86,6 +86,9 @@ class UTestConstructorCall(
 ) : UTestCall {
     override val instance: UTestExpression? = null
     override val type: JcType = method.enclosingClass.toType()
+    override fun toString(): String {
+        return "new ${method.enclosingClass.simpleName}(${args.joinToString(", ")})"
+    }
 }
 
 class UTestAllocateMemoryCall(
@@ -95,6 +98,9 @@ class UTestAllocateMemoryCall(
     override val method: JcMethod? = null
     override val args: List<UTestExpression> = listOf()
     override val type: JcType = clazz.toType()
+    override fun toString(): String {
+        return "allocate(${clazz.simpleName})"
+    }
 }
 
 class UTestAssertThrowsCall(
@@ -105,6 +111,9 @@ class UTestAssertThrowsCall(
     override val method: JcMethod? = null
     override val args: List<UTestExpression> = emptyList()
     override val type: JcType = exceptionClass.classpath.void
+    override fun toString(): String {
+        return "assertThrows(${instList.joinToString { "; " }})"
+    }
 }
 
 class UTestAssertEqualsCall(
@@ -121,6 +130,9 @@ class UTestAssertEqualsCall(
     override val method: JcMethod? = null
     override val args: List<UTestExpression> = emptyList()
     override val type: JcType = expected.type!!.classpath.boolean
+    override fun toString(): String {
+        return "assertEquals(${expected}, ${actual})"
+    }
 }
 
 sealed interface UTestStatement : UTestInst
@@ -129,12 +141,20 @@ class UTestSetFieldStatement(
     val instance: UTestExpression,
     val field: JcField,
     val value: UTestExpression
-) : UTestStatement
+) : UTestStatement {
+    override fun toString(): String {
+        return "$instance.${field.name} = $value"
+    }
+}
 
 class UTestSetStaticFieldStatement(
     val field: JcField,
     val value: UTestExpression
-) : UTestStatement
+) : UTestStatement {
+    override fun toString(): String {
+        return "${field.enclosingClass.simpleName}.${field.name} = $value"
+    }
+}
 
 
 class UTestBinaryConditionExpression(
@@ -177,6 +197,9 @@ class UTestGetStaticFieldExpression(
 
 sealed class UTestConstExpression<T> : UTestExpression {
     abstract val value: T
+    override fun toString(): String {
+        return "$value"
+    }
 }
 
 class UTestBooleanExpression(
@@ -217,12 +240,20 @@ class UTestDoubleExpression(
 class UTestCharExpression(
     override val value: Char,
     override val type: JcType
-) : UTestConstExpression<Char>()
+) : UTestConstExpression<Char>() {
+    override fun toString(): String {
+        return "'$value'"
+    }
+}
 
 class UTestStringExpression(
     override val value: String,
     override val type: JcType
-) : UTestConstExpression<String>()
+) : UTestConstExpression<String>() {
+    override fun toString(): String {
+        return "\"$value\""
+    }
+}
 
 class UTestNullExpression(
     override val type: JcType
@@ -235,12 +266,18 @@ class UTestGetFieldExpression(
     val field: JcField
 ) : UTestExpression {
     override val type: JcType? = field.enclosingClass.classpath.findTypeOrNull(field.type)
+    override fun toString(): String {
+        return "$instance.${field.name}"
+    }
 }
 
 class UTestArrayLengthExpression(
     val arrayInstance: UTestExpression
 ) : UTestExpression {
     override val type: JcType? = arrayInstance.type?.classpath?.int
+    override fun toString(): String {
+        return "$arrayInstance.size"
+    }
 }
 
 class UTestArrayGetExpression(
@@ -248,19 +285,29 @@ class UTestArrayGetExpression(
     val index: UTestExpression
 ) : UTestExpression {
     override val type: JcType? = (arrayInstance.type as? JcArrayType)?.elementType
+    override fun toString(): String {
+        return "$arrayInstance[$index]"
+    }
 }
 
 class UTestArraySetStatement(
     val arrayInstance: UTestExpression,
     val index: UTestExpression,
     val setValueExpression: UTestExpression
-) : UTestStatement
+) : UTestStatement {
+    override fun toString(): String {
+        return "$arrayInstance[$index] = $setValueExpression"
+    }
+}
 
 class UTestCreateArrayExpression(
     val elementType: JcType,
     val size: UTestExpression
 ) : UTestExpression {
     override val type: JcType = elementType.classpath.arrayTypeOf(elementType)
+    override fun toString(): String {
+        return "new ${elementType.typeName}[$size]"
+    }
 }
 
 class UTestCastExpression(
@@ -270,7 +317,11 @@ class UTestCastExpression(
 
 class UTestClassExpression(
     override val type: JcType
-): UTestExpression
+): UTestExpression {
+    override fun toString(): String {
+        return "${type.typeName}.class"
+    }
+}
 
 
 enum class ConditionType {
