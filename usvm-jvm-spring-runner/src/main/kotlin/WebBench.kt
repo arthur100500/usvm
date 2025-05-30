@@ -84,7 +84,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 
 private fun loadWebPetClinicBench(): BenchCp {
-    val petClinicDir = Path("C:\\Users\\arthur\\Documents\\spring-petclinic\\build\\libs\\BOOT-INF")
+    val petClinicDir = Path("C:\\Users\\arthu\\Documents\\spring-petclinic\\build\\libs\\BOOT-INF")
     return loadWebAppBenchCp(petClinicDir / "classes", petClinicDir / "lib")
 }
 
@@ -113,9 +113,14 @@ private fun loadJHipsterBench(): BenchCp {
     return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib")
 }
 
+private fun loadBenchFromEnv(): BenchCp {
+    val benchDir = Path(System.getenv("usvm.benchmark"))
+    return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib")
+}
+
 fun main() {
     val benchCp = logTime("Init jacodb") {
-        loadWebPetClinicBench()
+        loadBenchFromEnv()
     }
 
     logTime("Analysis ALL") {
