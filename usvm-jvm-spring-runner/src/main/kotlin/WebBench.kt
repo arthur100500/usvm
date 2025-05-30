@@ -106,6 +106,11 @@ private fun loadJHipsterBench(): BenchCp {
     return loadWebAppBenchCp(benchDir / "classes", benchDir / "lib")
 }
 
+private fun loadLearnrBench(): BenchCp {
+    val learnrDir = Path("C:\\Users\\arthu\\Desktop\\explyt-test-example-project-main\\target\\BOOT-INF")
+    return loadWebAppBenchCp(learnrDir / "classes", learnrDir / "lib")
+}
+
 fun main() {
     val benchCp = logTime("Init jacodb") {
         loadSynthBench()
@@ -381,7 +386,7 @@ private fun analyzeBench(benchmark: BenchCp) {
         pathSelectionStrategies = listOf(PathSelectionStrategy.BFS),
         coverageZone = CoverageZone.METHOD,
         exceptionsPropagation = false,
-        timeout = 10.minutes,
+        timeout = 7.minutes,
         solverType = SolverType.YICES,
         loopIterationLimit = 2,
         solverTimeout = Duration.INFINITE, // we do not need the timeout for a solver in tests
@@ -441,7 +446,8 @@ private fun reproduceTests(
     for ((method, value) in reproducingResults) {
         val folder = if (value.second == "success") "Good tests" else "Bad Tests"
 
-        val testFilePath = Path("C:\\Users\\arthur\\OneDrive\\Рабочий стол\\Tests\\${folder}\\${method}.java")
+        val testRootFolder = "C:\\Users\\arthu\\Desktop\\Tests"
+        val testFilePath = Path("${testRootFolder}\\${folder}\\${method}.java")
         val file = if (testFilePath.exists()) testFilePath.toFile() else testFilePath.createFile().toFile()
 
         var sb = StringBuilder()

@@ -577,7 +577,7 @@ class JcSpringMethodApproximationResolver (
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, kind: String, controllerTypeName: String): Boolean {
         // skibidi
-        return true
+        return path == "/api/comments/addReply"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {

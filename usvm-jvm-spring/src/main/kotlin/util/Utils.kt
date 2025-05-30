@@ -72,3 +72,6 @@ internal val JcMethod.isServletRequestMethod: Boolean
 internal val JcMethod.isDeserializationMethod: Boolean
     get() = name == "readWithMessageConverters"
             && enclosingClass.isArgumentResolver
+
+internal val JcMethod.isDoFilterMethod: Boolean
+    get() = name == "doFilter" || name == "doFilterInternal"

@@ -7,6 +7,7 @@ import org.jacodb.api.jvm.ext.humanReadableSignature
 import org.usvm.collections.immutable.internal.MutabilityOwnership
 import org.usvm.constraints.UTypeConstraints
 import org.usvm.machine.JcContext
+import util.*
 import util.isArgumentResolverMethod
 import util.isDeserializationMethod
 import util.isHttpRequestMethod
@@ -32,7 +33,8 @@ class JcSpringMemory(
                 method.isArgumentResolverMethod ||
                 method.isHttpRequestMethod ||
                 method.isServletRequestMethod ||
-                method.isDeserializationMethod
+                method.isDeserializationMethod ||
+                method.isDoFilterMethod
     }
 
     override fun shouldConcretizeMethod(method: JcMethod): Boolean {
@@ -42,6 +44,8 @@ class JcSpringMemory(
     companion object {
 
         //region Concrete Invocations
+
+        val jakarta = "javax"
 
         private val forbiddenInvocations = setOf(
             "org.springframework.test.context.TestContextManager#<init>(java.lang.Class):void",
@@ -73,29 +77,24 @@ class JcSpringMemory(
             "org.springframework.boot.SpringApplication#printBanner(org.springframework.core.env.ConfigurableEnvironment):org.springframework.boot.Banner",
             "org.springframework.boot.SpringApplication#afterRefresh(org.springframework.context.ConfigurableApplicationContext,org.springframework.boot.ApplicationArguments):void",
             "org.springframework.test.web.servlet.MockMvc#perform(org.springframework.test.web.servlet.RequestBuilder):org.springframework.test.web.servlet.ResultActions",
-            "org.springframework.mock.web.MockFilterChain#doFilter(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse):void",
-            "org.springframework.web.filter.RequestContextFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.web.filter.FormContentFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.web.filter.CharacterEncodingFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.mock.web.MockFilterChain\$ServletFilterProxy#doFilter(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse,jakarta.servlet.FilterChain):void",
-            "jakarta.servlet.http.HttpServlet#service(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse):void",
-            "org.springframework.test.web.servlet.TestDispatcherServlet#service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "jakarta.servlet.http.HttpServlet#service(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
+            "$jakarta.servlet.http.HttpServlet#service($jakarta.servlet.ServletRequest,$jakarta.servlet.ServletResponse):void",
+            "org.springframework.test.web.servlet.TestDispatcherServlet#service($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#service($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "$jakarta.servlet.http.HttpServlet#service($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
 
-            "org.springframework.web.servlet.FrameworkServlet#doGet(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#doPost(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#doPut(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#doDelete(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#doOptions(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.FrameworkServlet#doTrace(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doGet($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doPost($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doPut($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doDelete($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doOptions($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.FrameworkServlet#doTrace($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
 
-            "org.springframework.web.servlet.FrameworkServlet#processRequest(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.DispatcherServlet#doService(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.DispatcherServlet#doDispatch(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse):void",
-            "org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter#handle(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,java.lang.Object):org.springframework.web.servlet.ModelAndView",
-            "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#handleInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod):org.springframework.web.servlet.ModelAndView",
-            "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#invokeHandlerMethod(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod):org.springframework.web.servlet.ModelAndView",
+            "org.springframework.web.servlet.FrameworkServlet#processRequest($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.DispatcherServlet#doService($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.DispatcherServlet#doDispatch($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse):void",
+            "org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter#handle($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse,java.lang.Object):org.springframework.web.servlet.ModelAndView",
+            "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#handleInternal($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod):org.springframework.web.servlet.ModelAndView",
+            "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter#invokeHandlerMethod($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod):org.springframework.web.servlet.ModelAndView",
             "org.springframework.web.method.annotation.ModelFactory#initModel(org.springframework.web.context.request.NativeWebRequest,org.springframework.web.method.support.ModelAndViewContainer,org.springframework.web.method.HandlerMethod):void",
             "org.springframework.web.method.annotation.ModelFactory#invokeModelAttributeMethods(org.springframework.web.context.request.NativeWebRequest,org.springframework.web.method.support.ModelAndViewContainer):void",
             "org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod#invokeAndHandle(org.springframework.web.context.request.ServletWebRequest,org.springframework.web.method.support.ModelAndViewContainer,java.lang.Object[]):void",
@@ -104,7 +103,7 @@ class JcSpringMemory(
             "org.springframework.web.method.support.InvocableHandlerMethod#doInvoke(java.lang.Object[]):java.lang.Object",
 
             "org.springframework.web.servlet.mvc.method.annotation.ServletModelAttributeMethodProcessor#bindRequestParameters(org.springframework.web.bind.WebDataBinder,org.springframework.web.context.request.NativeWebRequest):void",
-            "org.springframework.web.bind.ServletRequestDataBinder#bind(jakarta.servlet.ServletRequest):void",
+            "org.springframework.web.bind.ServletRequestDataBinder#bind($jakarta.servlet.ServletRequest):void",
             "org.springframework.web.bind.WebDataBinder#doBind(org.springframework.beans.MutablePropertyValues):void",
             "org.springframework.validation.DataBinder#doBind(org.springframework.beans.MutablePropertyValues):void",
             "org.springframework.validation.AbstractBindingResult#getModel():java.util.Map",
@@ -112,10 +111,8 @@ class JcSpringMemory(
             "org.springframework.util.function.ThrowingSupplier#get():java.lang.Object",
             "org.springframework.util.function.ThrowingSupplier#get(java.util.function.BiFunction):java.lang.Object",
 
-            "org.springframework.web.servlet.handler.HandlerMappingIntrospector#lambda\$createCacheFilter\$3(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.security.web.FilterChainProxy#doFilterInternal(jakarta.servlet.ServletRequest,jakarta.servlet.ServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.security.web.session.DisableEncodeUrlFilter#doFilterInternal(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
-            "org.springframework.security.web.header.HeaderWriterFilter#doHeadersAfter(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,jakarta.servlet.FilterChain):void",
+            "org.springframework.web.servlet.handler.HandlerMappingIntrospector#lambda\$createCacheFilter\$3($jakarta.servlet.ServletRequest,$jakarta.servlet.ServletResponse,$jakarta.servlet.FilterChain):void",
+            "org.springframework.security.web.header.HeaderWriterFilter#doHeadersAfter($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse,$jakarta.servlet.FilterChain):void",
 
             "org.springframework.mock.web.MockHttpServletRequest#getParameterMap():java.util.Map",
             "org.springframework.mock.web.MockHttpServletRequest#_getHeaderMap():java.util.Map",
@@ -137,6 +134,8 @@ class JcSpringMemory(
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#read(java.lang.reflect.Type,java.lang.Class,org.springframework.http.HttpInputMessage):java.lang.Object",
             "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter#readJavaType(com.fasterxml.jackson.databind.JavaType,org.springframework.http.HttpInputMessage):java.lang.Object",
             "com.fasterxml.jackson.databind.ObjectReader#readValue(java.io.InputStream):java.lang.Object",
+            "com.fasterxml.jackson.databind.ObjectMapper#readValue(java.io.InputStream,com.fasterxml.jackson.databind.JavaType):java.lang.Object",
+            "com.fasterxml.jackson.databind.ObjectMapper#_readMapAndClose(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.JavaType):java.lang.Object",
             "com.fasterxml.jackson.databind.ObjectReader#_bindAndClose(com.fasterxml.jackson.core.JsonParser):java.lang.Object",
             "com.fasterxml.jackson.databind.deser.DefaultDeserializationContext#readRootValue(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.JavaType,com.fasterxml.jackson.databind.JsonDeserializer,java.lang.Object):java.lang.Object",
             "com.fasterxml.jackson.databind.deser.BeanDeserializer#deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):java.lang.Object",
@@ -145,7 +144,7 @@ class JcSpringMemory(
         )
 
         private val concretizeInvocations = setOf(
-            "org.springframework.web.servlet.DispatcherServlet#processDispatchResult(jakarta.servlet.http.HttpServletRequest,jakarta.servlet.http.HttpServletResponse,org.springframework.web.servlet.HandlerExecutionChain,org.springframework.web.servlet.ModelAndView,java.lang.Exception):void",
+            "org.springframework.web.servlet.DispatcherServlet#processDispatchResult($jakarta.servlet.http.HttpServletRequest,$jakarta.servlet.http.HttpServletResponse,org.springframework.web.servlet.HandlerExecutionChain,org.springframework.web.servlet.ModelAndView,java.lang.Exception):void",
             // TODO: need it? #CM
             "org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite#handleReturnValue(java.lang.Object,org.springframework.core.MethodParameter,org.springframework.web.method.support.ModelAndViewContainer,org.springframework.web.context.request.NativeWebRequest):void",
         )

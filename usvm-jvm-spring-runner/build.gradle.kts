@@ -50,7 +50,7 @@ dependencies {
 }
 
 // TODO: make versions flexible (JHipster needs 2.7.3, petclinic needs 3.2.0)
-val springVersion = "3.2.0"
+val springVersion = "2.3.2.RELEASE"
 val junitVersion = "5.3.1"
 
 dependencies {
