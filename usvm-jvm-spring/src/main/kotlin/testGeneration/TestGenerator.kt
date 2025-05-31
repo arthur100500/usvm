@@ -114,7 +114,7 @@ internal fun JcSpringState.generateTest(): SpringTestInfo {
 
     val testBuilder = JcStateSpringTestBuilder(ctx.cp, controller, testKind, testClass, this, resolver)
     val uTest = testBuilder.build()
-    return SpringTestInfo(handler, isExceptional, uTest)
+    return SpringTestInfo(id, handler, isExceptional, uTest)
 }
 
 private fun getSpringException(
