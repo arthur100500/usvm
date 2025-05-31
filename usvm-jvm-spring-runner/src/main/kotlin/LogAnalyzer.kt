@@ -14,6 +14,13 @@ data class Problem(
     val path: String?
 )
 
+data class ForkPoint(
+    val methodName: String,
+    val line: Int,
+    val description: String,
+    var wasKilled: Boolean
+)
+
 private val DIGITS = "\\d+".toRegex()
 private val STACK_DEPTH_PREFIX = "<\\|\\d+\\|>".toRegex()
 
@@ -21,15 +28,21 @@ fun removeStackDepth(line: String): String {
     return line.replace(STACK_DEPTH_PREFIX, "")
 }
 
+fun forkPointToString(forkPoint: ForkPoint): String {
+    val killedText = if (forkPoint.wasKilled) "killed" else ""
+    return "${forkPoint.line}: ${forkPoint.methodName} $killedText\n"
+}
+
 fun problemToString(problem: Problem): String {
     return "-----------\nType: ${problem.type.name}\nIn log line: ${problem.line}\nHappened in state ${problem.stateId} with path ${problem.path}\nLine content: ${problem.description}\n"
 }
 
 fun analyzeLog() {
-    val log = File("springLog.ansi")
-    val summary = File("springErrors.ansi")
+    val log = File(System.getenv("usvm.log") ?: "springLog.ansi")
+    val summary = File(System.getenv("usvm.errors") ?: "springErrors.ansi")
     val statePaths = HashMap<Int, String?>()
     val foundProblems = ArrayList<Problem>()
+    val forkPoints = ArrayList<ForkPoint>()
     var currentState = 0
     var lineNumber = 0
     var beforePrintPath = false
@@ -40,6 +53,23 @@ fun analyzeLog() {
 
         if (line.startsWith("picked state: ")) {
             currentState = DIGITS.find(it)!!.value.toInt()
+        }
+
+        if (line.startsWith("\u001B[34mForked on method ")) {
+            forkPoints.add(ForkPoint(
+                methodName = line.substring(22),
+                line = lineNumber,
+                description = line,
+                wasKilled = false
+            ))
+        }
+
+        if (line.startsWith("removed state: ")) {
+            // Stacktrace should be greater than 50 really
+            val latestForkPoint = forkPoints.lastOrNull()
+            if (latestForkPoint != null && latestForkPoint.line - lineNumber < 50) {
+                latestForkPoint.wasKilled = true
+            }
         }
 
         val path: String? = statePaths[currentState]
@@ -74,4 +104,7 @@ fun analyzeLog() {
         summary.appendText("Problems of type ${t.key}\n")
         t.value.forEach { p -> summary.appendText(problemToString(p)) }
     }
+
+    summary.appendText("\n\nFork points:\n")
+    forkPoints.forEach { summary.appendText(forkPointToString(it)) }
 }
