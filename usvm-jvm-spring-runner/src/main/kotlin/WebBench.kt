@@ -345,9 +345,10 @@ private fun generateTestClass(benchmark: BenchCp, internalTestKind: InternalTest
             InternalTestKind.SpringBootTest -> {
                 testKind = SpringBootTest(applicationClass)
                 val autoConfigureMockMvcAnnotation = AnnotationNode("org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc".jvmName())
+                val disableInAoutModeAnnotation = AnnotationNode("org.springframework.test.context.aot.DisabledInAotMode".jvmName())
+                val sprintBootTestAnnotation = AnnotationNode("org.springframework.boot.test.context.SpringBootTest".jvmName())
                 val transactionalAnnotation = AnnotationNode("jakarta.transaction.Transactional".jvmName())
                 val dirtiesContextAnnotation = AnnotationNode("org.springframework.test.annotation.DirtiesContext".jvmName())
-                val sprintBootTestAnnotation = AnnotationNode("org.springframework.boot.test.context.SpringBootTest".jvmName())
                 val testPropertySourceAnnotation = AnnotationNode("org.springframework.test.context.TestPropertySource".jvmName())
                 val disabledInAotModeAnnotation = AnnotationNode("org.springframework.test.context.aot.DisabledInAotMode".jvmName())
                 sprintBootTestAnnotation.values = listOf(
@@ -360,6 +361,7 @@ private fun generateTestClass(benchmark: BenchCp, internalTestKind: InternalTest
                         "spring.jpa.defer-datasource-initialization=true"
                     )
                 )
+                classNode.visibleAnnotations.add(disableInAoutModeAnnotation)
                 classNode.visibleAnnotations.add(sprintBootTestAnnotation)
                 classNode.visibleAnnotations.add(autoConfigureMockMvcAnnotation)
                 classNode.visibleAnnotations.add(testPropertySourceAnnotation)
