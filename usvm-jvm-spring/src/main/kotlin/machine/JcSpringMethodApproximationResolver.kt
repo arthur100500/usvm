@@ -45,6 +45,7 @@ import org.usvm.machine.state.skipMethodInvocationWithValue
 import org.usvm.jvm.util.allInstanceFields
 import org.usvm.jvm.util.findJavaField
 import org.usvm.util.classesOfLocations
+import org.usvm.test.api.spring.WebMvcTest
 import org.usvm.jvm.util.toJavaClass
 import org.usvm.machine.JcConcreteMethodCallInst
 import org.usvm.machine.state.newStmt
@@ -529,8 +530,10 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, methods: List<String>, controllerTypeName: String): Boolean {
-        // skibidi
-        return path == "/owners/new"
+        val preferredPath = System.getenv("usvm.path") ?: ".*"
+        val preferredMethod = System.getenv("usvm.path") ?: ".*"
+        val methodMatches = methods.any() { Regex(preferredMethod).matches(it) }
+        return Regex(preferredPath).matches(path) && methodMatches
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
