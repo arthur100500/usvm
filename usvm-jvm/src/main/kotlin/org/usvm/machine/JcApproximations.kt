@@ -946,6 +946,11 @@ open class JcMethodApproximationResolver(
                     blockOnSymbolic = { acc, ref -> scope.assert(ctx.mkImplies(ref.guard, condition)) ?: acc }
                 )?.let { ctx.voidValue }
             }
+            dispatchUsvmApiMethod(Engine::assumeSoft) {
+                val arg = it.arguments.single().asExpr(ctx.booleanSort)
+                scope.doWithState { pathConstraints.addSoftConstraint(arg) }
+                ctx.voidValue
+            }
             dispatchUsvmApiMethod(Engine::makeSymbolicBoolean) {
                 scope.calcOnState { makeSymbolicPrimitive(ctx.booleanSort) }
             }
