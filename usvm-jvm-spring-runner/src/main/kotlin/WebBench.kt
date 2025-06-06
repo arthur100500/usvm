@@ -230,7 +230,7 @@ private val JcClassOrInterface.jvmDescriptor: String get() = name.jvmName()
 fun allByAnnotation(allClasses: Sequence<JcClassOrInterface>, annotationName: String) =
     allClasses.filter { it.annotations.any { annotation -> annotation.name == annotationName } }
 
-const val enableSecurity: Boolean = false
+const val enableSecurity: Boolean = true
 
 private fun addSecurityConfigs(testClassNode: ClassNode, nonAbstractClasses: Sequence<JcClassOrInterface>) {
     val importAnnotationName = "org.springframework.context.annotation.Import".jvmName()
@@ -443,7 +443,7 @@ private fun analyzeBench(benchmark: BenchCp) {
     val startClass = nonAbstractClasses.find { it.simpleName == "NewStartSpring" }!!.toType()
     val method = startClass.declaredMethods.find { it.name == "startSpring" }!!
     // using file instead of console
-    val fileStream = PrintStream("springLog.ansi")
+    val fileStream = PrintStream(System.getenv("usvm.log") ?: "springLog.ansi")
     System.setOut(fileStream)
     val options = UMachineOptions(
         useSoftConstraints = false,
@@ -513,18 +513,18 @@ private fun reproduceTests(
     val testReproducer by lazy { SpringTestReproducer(jcConcreteMachineOptions, cp) }
     val testRenderer by lazy { SpringTestRenderer(cp) }
 
-    val reproducedTests = mutableListOf<Pair<UTest, JcSpringMvcTestInfo>>()
+    // val reproducedTests = mutableListOf<Pair<UTest, JcSpringMvcTestInfo>>()
     val notReproducedTests = mutableListOf<Pair<UTest, JcSpringMvcTestInfo>>()
     for (testInfo in tests) {
-        val reproduced = testReproducer.reproduce(testInfo.test)
-        if (reproduced == "success")
-            reproducedTests.add(testInfo.toRenderInfo())
-        else {
+        // val reproduced = testReproducer.reproduce(testInfo.test)
+//        if (reproduced == "success")
+//            reproducedTests.add(testInfo.toRenderInfo())
+//        else {
             println(testInfo.stateId)
-            println(reproduced)
+//            println(reproduced)
             println(testRenderer.render(testInfo.test, testInfo.method, testInfo.isExceptional))
             notReproducedTests.add(testInfo.toRenderInfo())
-        }
+//        }
     }
     testReproducer.kill()
 
@@ -536,9 +536,9 @@ private fun reproduceTests(
     val notReproducedDir = generatedTestsDir.resolve("notReproduced")
     createOrClear(notReproducedDir)
 
-    renderTests(testRenderer, reproducedTests + notReproducedTests, notReproducedDir)
+    // renderTests(testRenderer, reproducedTests + notReproducedTests, notReproducedDir)
 
-    println("Reproduced ${reproducedTests.size} of ${tests.size} tests")
+    // println("Reproduced ${reproducedTests.size} of ${tests.size} tests")
 }
 
 private fun JcClasspath.nonAbstractClasses(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> =

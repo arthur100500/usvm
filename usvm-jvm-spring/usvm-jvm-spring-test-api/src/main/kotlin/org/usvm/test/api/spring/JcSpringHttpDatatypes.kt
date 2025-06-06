@@ -44,6 +44,12 @@ class JcSpringHttpCookie(
     }
 }
 
+class JcSpringUser(
+    val name: UTString,
+    val password: UTString,
+    val authorities: UTAny
+)
+
 enum class JcSpringRequestMethod {
     GET,
     PUT,

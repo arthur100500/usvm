@@ -44,6 +44,8 @@ import org.usvm.machine.JcContext
 import org.usvm.machine.JcMethodCall
 import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
+import org.usvm.test.api.spring.JcSpringTestKind
+import org.usvm.test.api.spring.SpringBootTest
 import org.usvm.util.classesOfLocations
 import org.usvm.test.api.spring.WebMvcTest
 import util.isDeserializationMethod
@@ -600,8 +602,8 @@ class JcSpringMethodApproximationResolver (
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, methods: List<String>, controllerTypeName: String): Boolean {
         val preferredPath = System.getenv("usvm.path") ?: ".*"
-        val preferredMethod = System.getenv("usvm.path") ?: ".*"
-        val methodMatches = methods.any() { Regex(preferredMethod).matches(it) }
+        val preferredMethod = System.getenv("usvm.method") ?: ".*"
+        val methodMatches = methods.any { Regex(preferredMethod).matches(it) }
         return Regex(preferredPath).matches(path) && methodMatches
     }
 
@@ -730,6 +732,15 @@ class JcSpringMethodApproximationResolver (
                 skipMethodInvocationWithValue(methodCall, ctx.voidValue)
             }
 
+            return true
+        }
+
+        if (method.name == "_shouldBuildMockMvc") {
+            scope.doWithState {
+                this as JcSpringState
+                val result = ctx.mkBool(this.testKind !is SpringBootTest)
+                skipMethodInvocationWithValue(methodCall, result)
+            }
             return true
         }
 

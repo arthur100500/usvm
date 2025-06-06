@@ -161,6 +161,8 @@ abstract class JcSpringTestBuilder {
         request.getContent()?.let { builder.addContent(it) }
         request.getContentTypeName()?.let { builder.addContentType(it) }
 
+        request.getUser()?.let { builder.addUser(it) }
+
         return builder.getDSL() to builder.getInitDSL()
     }
 

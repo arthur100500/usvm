@@ -30,7 +30,7 @@ fun removeStackDepth(line: String): String {
 
 fun forkPointToString(forkPoint: ForkPoint): String {
     val killedText = if (forkPoint.wasKilled) "killed" else ""
-    return "${forkPoint.line}: ${forkPoint.methodName} $killedText\n"
+    return " $killedText ${forkPoint.line}: ${forkPoint.methodName}\n"
 }
 
 fun problemToString(problem: Problem): String {

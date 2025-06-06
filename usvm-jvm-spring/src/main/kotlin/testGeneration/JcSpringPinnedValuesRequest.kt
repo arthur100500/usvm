@@ -15,6 +15,7 @@ import org.usvm.test.api.spring.JcSpringHttpHeader
 import org.usvm.test.api.spring.JcSpringHttpParameter
 import org.usvm.test.api.spring.JcSpringRequest
 import org.usvm.test.api.spring.JcSpringRequestMethod
+import org.usvm.test.api.spring.JcSpringUser
 import org.usvm.test.api.spring.UTAny
 import org.usvm.test.api.spring.UTString
 import org.usvm.test.api.spring.UTStringArray
@@ -98,6 +99,23 @@ class JcSpringPinnedValuesRequest(
         val matrixVariables = collectAndResolve(JcSpringPinnedValueSource.REQUEST_MATRIX)
         val matrixSuffix = renderMatrixVariables(matrixVariables as Map<UTString, UTString>)
         return UTString(path.value + matrixSuffix, stringType)
+    }
+
+    override fun getUser(): JcSpringUser? {
+        val username = pinnedValues.getValue(JcPinnedKey.requestUserName())
+            ?.let { exprResolver.resolvePinnedValue(it) }
+        val password = pinnedValues.getValue(JcPinnedKey.requestUserPassword())
+            ?.let { exprResolver.resolvePinnedValue(it) }
+        val authorities = pinnedValues.getValue(JcPinnedKey.requestUserAuthorities())
+            ?.let { exprResolver.resolvePinnedValue(it) }
+
+        if (username == null || password == null || authorities == null)
+            return null
+
+        check(username is UTString)
+        check(password is UTString)
+
+        return JcSpringUser(username, password, authorities)
     }
 
     override fun getContent(): UTAny? {

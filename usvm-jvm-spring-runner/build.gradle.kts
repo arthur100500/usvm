@@ -1,5 +1,6 @@
 plugins {
     id("usvm.kotlin-conventions")
+    id("org.springframework.boot").version("3.5.0")
 }
 
 repositories {
@@ -51,7 +52,8 @@ dependencies {
 }
 
 // TODO: make versions flexible (JHipster needs 2.7.3, petclinic needs 3.2.0)
-val springVersion = "3.2.0"
+val springVersion = "3.5.0"
+val springSecurityVersion = "6.5.0"
 val junitVersion = "5.3.1"
 
 dependencies {
@@ -68,6 +70,8 @@ val springTestDeps by configurations.creating
 dependencies {
     springTestDeps("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     springTestDeps("org.springframework.boot:spring-boot-starter-test:$springVersion")
+    springTestDeps("org.springframework.boot:spring-boot-starter-security:$springVersion")
+    springTestDeps("org.springframework.security:spring-security-test:$springSecurityVersion")
 }
 
 fun createOrClear(file: File) {

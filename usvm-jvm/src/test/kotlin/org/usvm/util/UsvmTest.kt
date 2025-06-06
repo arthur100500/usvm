@@ -14,7 +14,7 @@ annotation class Options(
     val strategies: Array<PathSelectionStrategy>,
     val combinationStrategy: PathSelectorCombinationStrategy = PathSelectorCombinationStrategy.INTERLEAVED,
     val stopOnCoverage: Int = 100,
-    val timeout: Long = 20_000,
+    val timeout: Long = 123123123123123,
     val coverageZone: CoverageZone = CoverageZone.METHOD,
     val solverType: SolverType = SolverType.YICES,
     val targetSearchDepth: UInt = 0u

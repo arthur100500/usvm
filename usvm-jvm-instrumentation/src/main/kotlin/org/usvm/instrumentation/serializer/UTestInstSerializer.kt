@@ -405,6 +405,7 @@ class UTestInstSerializer(private val ctx: SerializationContext) {
         )
 
     private fun AbstractBuffer.deserializeUTestClassExpression(): UTestClassExpression {
+
         val type = readJcType(jcClasspath)!!
         return UTestClassExpression(type)
     }

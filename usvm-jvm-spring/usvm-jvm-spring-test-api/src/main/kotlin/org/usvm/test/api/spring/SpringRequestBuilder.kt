@@ -7,6 +7,7 @@ import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.objectType
 import org.usvm.jvm.util.stringType
 import org.usvm.test.api.UTestArraySetStatement
+import org.usvm.test.api.UTestConstructorCall
 import org.usvm.test.api.UTestCreateArrayExpression
 import org.usvm.test.api.UTestExpression
 import org.usvm.test.api.UTestGetStaticFieldExpression
@@ -34,6 +35,12 @@ class SpringRequestBuilder private constructor(
 
         private const val MOCK_HTTP_SERVLET_REQUEST_BUILDER_CLASS =
             "org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder"
+
+        private const val USER_CLASS =
+            "org.springframework.security.core.userdetails.User"
+
+        private const val SECURITY_MOCK_MVC_REQUEST_POST_PROCESSORS =
+            "org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors"
 
         private fun commonReqDSLBuilder(
             cp: JcClasspath,
@@ -75,6 +82,32 @@ class SpringRequestBuilder private constructor(
     fun addParameter(parameter: JcSpringHttpParameter): SpringRequestBuilder {
         val method = cp.findJcMethod(MOCK_HTTP_SERVLET_REQUEST_BUILDER_CLASS, "param")
         addMethodCall(method, parameter.getName(), parameter.getValues())
+        return this
+    }
+
+    fun addUser(user: JcSpringUser): SpringRequestBuilder {
+        val userConstructor = cp.findJcMethod(
+            USER_CLASS,
+            "<init>",
+            listOf("java.lang.String", "java.lang.String", "java.util.Collection")
+        )
+        val withMethod = cp.findJcMethod(
+            MOCK_HTTP_SERVLET_REQUEST_BUILDER_CLASS,
+            "with"
+        )
+        val userMethod = cp.findJcMethod(
+            SECURITY_MOCK_MVC_REQUEST_POST_PROCESSORS,
+            "user",
+            listOf("org.springframework.security.core.userdetails.UserDetails")
+        )
+
+        val createdUser = UTestConstructorCall(userConstructor, listOf(user.name, user.password, user.authorities))
+        val userRequestPostProcessor = UTestStaticMethodCall(userMethod, listOf(createdUser))
+        reqDSL = UTestMethodCall(
+            instance = reqDSL,
+            method = withMethod,
+            args = listOf(userRequestPostProcessor),
+        )
         return this
     }
 
