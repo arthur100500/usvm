@@ -345,12 +345,11 @@ private fun generateTestClass(benchmark: BenchCp, internalTestKind: InternalTest
             InternalTestKind.SpringBootTest -> {
                 testKind = SpringBootTest(applicationClass)
                 val autoConfigureMockMvcAnnotation = AnnotationNode("org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc".jvmName())
-                val disableInAoutModeAnnotation = AnnotationNode("org.springframework.test.context.aot.DisabledInAotMode".jvmName())
+                val disableInAotModeAnnotation = AnnotationNode("org.springframework.test.context.aot.DisabledInAotMode".jvmName())
                 val sprintBootTestAnnotation = AnnotationNode("org.springframework.boot.test.context.SpringBootTest".jvmName())
                 val transactionalAnnotation = AnnotationNode("jakarta.transaction.Transactional".jvmName())
                 val dirtiesContextAnnotation = AnnotationNode("org.springframework.test.annotation.DirtiesContext".jvmName())
                 val testPropertySourceAnnotation = AnnotationNode("org.springframework.test.context.TestPropertySource".jvmName())
-                val disabledInAotModeAnnotation = AnnotationNode("org.springframework.test.context.aot.DisabledInAotMode".jvmName())
                 sprintBootTestAnnotation.values = listOf(
                     "classes", listOf(Type.getType(applicationClass.jvmDescriptor))
                 )
@@ -361,11 +360,10 @@ private fun generateTestClass(benchmark: BenchCp, internalTestKind: InternalTest
                         "spring.jpa.defer-datasource-initialization=true"
                     )
                 )
-                classNode.visibleAnnotations.add(disableInAoutModeAnnotation)
+                classNode.visibleAnnotations.add(disableInAotModeAnnotation)
                 classNode.visibleAnnotations.add(sprintBootTestAnnotation)
                 classNode.visibleAnnotations.add(autoConfigureMockMvcAnnotation)
                 classNode.visibleAnnotations.add(testPropertySourceAnnotation)
-                classNode.visibleAnnotations.add(disabledInAotModeAnnotation)
                 val fakeTestMethodNode = classNode.methods.find { it.name == "fakeTest" }
                     ?: error("Could not find `fakeTest` method")
                 fakeTestMethodNode.visibleAnnotations = listOf(transactionalAnnotation, dirtiesContextAnnotation)
@@ -450,7 +448,7 @@ private fun analyzeBench(benchmark: BenchCp) {
         pathSelectionStrategies = listOf(PathSelectionStrategy.BFS),
         coverageZone = CoverageZone.METHOD,
         exceptionsPropagation = false,
-        timeout = 5.minutes,
+        timeout = 2.minutes,
         solverType = SolverType.YICES,
         loopIterationLimit = 2,
         solverTimeout = Duration.INFINITE, // we do not need the timeout for a solver in tests
