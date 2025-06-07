@@ -101,21 +101,10 @@ class JcSpringPinnedValuesRequest(
         return UTString(path.value + matrixSuffix, stringType)
     }
 
-    override fun getUser(): JcSpringUser? {
-        val username = pinnedValues.getValue(JcPinnedKey.requestUserName())
+    override fun getUser(): UTAny? {
+        val user = pinnedValues.getValue(JcPinnedKey.requestUser())
             ?.let { exprResolver.resolvePinnedValue(it) }
-        val password = pinnedValues.getValue(JcPinnedKey.requestUserPassword())
-            ?.let { exprResolver.resolvePinnedValue(it) }
-        val authorities = pinnedValues.getValue(JcPinnedKey.requestUserAuthorities())
-            ?.let { exprResolver.resolvePinnedValue(it) }
-
-        if (username == null || password == null || authorities == null)
-            return null
-
-        check(username is UTString)
-        check(password is UTString)
-
-        return JcSpringUser(username, password, authorities)
+        return user
     }
 
     override fun getContent(): UTAny? {

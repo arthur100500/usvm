@@ -85,12 +85,7 @@ class SpringRequestBuilder private constructor(
         return this
     }
 
-    fun addUser(user: JcSpringUser): SpringRequestBuilder {
-        val userConstructor = cp.findJcMethod(
-            USER_CLASS,
-            "<init>",
-            listOf("java.lang.String", "java.lang.String", "java.util.Collection")
-        )
+    fun addUser(user: UTAny): SpringRequestBuilder {
         val withMethod = cp.findJcMethod(
             MOCK_HTTP_SERVLET_REQUEST_BUILDER_CLASS,
             "with"
@@ -101,8 +96,7 @@ class SpringRequestBuilder private constructor(
             listOf("org.springframework.security.core.userdetails.UserDetails")
         )
 
-        val createdUser = UTestConstructorCall(userConstructor, listOf(user.name, user.password, user.authorities))
-        val userRequestPostProcessor = UTestStaticMethodCall(userMethod, listOf(createdUser))
+        val userRequestPostProcessor = UTestStaticMethodCall(userMethod, listOf(user))
         reqDSL = UTestMethodCall(
             instance = reqDSL,
             method = withMethod,
