@@ -23,9 +23,11 @@ import org.jacodb.api.jvm.ext.findClass
 import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.isAssignable
 import org.jacodb.api.jvm.ext.isEnum
+import org.jacodb.api.jvm.ext.isSubClassOf
 import org.jacodb.api.jvm.ext.objectType
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.void
+import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.usvm.UConcreteHeapRef
 import org.usvm.UExpr
 import org.usvm.UHeapRef
@@ -104,6 +106,10 @@ class JcSpringMethodApproximationResolver (
 
         if (className == "org.springframework.web.bind.ServletRequestDataBinder") {
             if (approximateServletRequestDataBinder(methodCall)) return true
+        }
+
+        if (className == "org.springframework.security.core.context.SecurityContextImpl") {
+            if (approximateSecurityContextImpl(methodCall)) return true
         }
 
         if (className == "generated.org.springframework.boot.databases.basetables.TableTracker") {
@@ -331,7 +337,19 @@ class JcSpringMethodApproximationResolver (
             }
             return true
         }
+        return false
+    }
 
+    private fun approximateSecurityContextImpl(methodCall: JcMethodCall): Boolean = with(methodCall) {
+        if (method.name == "_getUserClass") {
+            scope.doWithState {
+                val memory = memory as JcConcreteMemory
+                val userClass = getTypeOfUser()
+                val heapRef = memory.tryAllocateConcrete(userClass, ctx.classType)!!
+                skipMethodInvocationWithValue(methodCall, heapRef)
+            }
+            return true
+        }
         return false
     }
 
@@ -699,6 +717,22 @@ class JcSpringMethodApproximationResolver (
         }
 
         return fieldTypes
+    }
+
+    private fun getTypeOfUser(): Class<*> {
+        val userDetailsClass = ctx.cp
+            .findClass("org.springframework.security.core.userdetails.UserDetails")
+        val fallbackUserType = ctx.cp
+            .findClass("org.springframework.security.core.userdetails.User")
+            .toJavaClass(JcConcreteMemoryClassLoader)
+        val nonAbstractClasses = ctx.cp.locations
+            .asSequence()
+            .flatMap { it.classNames ?: emptySet() }
+            .mapNotNull { ctx.cp.findClassOrNull(it) }
+            .filterNot { it is JcUnknownClass || it.isAbstract || it.isInterface || it.isAnonymous }
+        val userClass = nonAbstractClasses.firstOrNull { it.isSubClassOf(userDetailsClass) }
+        val foundUserType = userClass?.toJavaClass(JcConcreteMemoryClassLoader)
+        return foundUserType ?: fallbackUserType
     }
 
     private fun approximateSpringBootStaticMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
