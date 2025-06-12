@@ -140,6 +140,8 @@ class JcSpringMemory(
             "org.springframework.security.core.context.SecurityContextImpl#getAuthentication():org.springframework.security.core.Authentication",
             "org.springframework.util.function.SingletonSupplier#get():java.lang.Object",
             "org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor#getAuthentication():org.springframework.security.core.Authentication",
+            "org.springframework.security.authorization.AuthorizationManager#authorize(java.util.function.Supplier,java.lang.Object):org.springframework.security.authorization.AuthorizationResult",
+            "org.springframework.security.web.access.intercept.RequestMatcherDelegatingAuthorizationManager#check(java.util.function.Supplier,java.lang.Object):org.springframework.security.authorization.AuthorizationDecision",
             "java.lang.ThreadLocal#get():java.lang.Object",
 
             "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver\$EmptyBodyCheckingHttpInputMessage#hasBody():boolean",

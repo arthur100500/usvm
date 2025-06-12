@@ -2,7 +2,6 @@ package org.usvm.samples;
 
 import org.usvm.api.Engine;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 public class ArrayListSample {
