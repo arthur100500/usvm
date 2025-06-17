@@ -30,12 +30,15 @@ import org.jacodb.impl.bytecode.toJcMethod
 import org.jacodb.impl.features.JcFeaturesChain
 import org.jacodb.impl.features.classpaths.ClasspathCache
 import org.jacodb.impl.types.JcClassTypeImpl
+import org.jacodb.impl.types.MethodInfo
+import org.jacodb.impl.types.ParameterInfo
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.tree.MethodNode
 import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaMethod
 
