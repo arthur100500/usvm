@@ -36,6 +36,8 @@ import org.usvm.USort
 import org.usvm.api.makeSymbolicPrimitive
 import org.usvm.api.makeSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
+import org.usvm.api.readArrayLength
+import org.usvm.api.readField
 import org.usvm.api.writeField
 import org.usvm.collection.field.UFieldLValue
 import org.usvm.jvm.util.allInstanceFields
@@ -45,13 +47,14 @@ import org.usvm.machine.JcConcreteMethodCallInst
 import org.usvm.machine.JcContext
 import org.usvm.machine.JcMethodCall
 import org.usvm.machine.JcVirtualMethodCallInst
+import org.usvm.machine.USizeSort
 import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
-import org.usvm.test.api.spring.JcSpringTestKind
+import org.usvm.memory.UMemory
+import org.usvm.sizeSort
 import org.usvm.test.api.spring.SpringBootTest
 import org.usvm.util.classesOfLocations
 import org.usvm.test.api.spring.WebMvcTest
-import org.usvm.test.util.checkers.eq
 import util.isDeserializationMethod
 import util.isGrantedAuthority
 import util.isSpringController
@@ -351,14 +354,33 @@ class JcSpringMethodApproximationResolver (
         return false
     }
 
+    private fun getStringLength(memory: UMemory<*, *>, string: UConcreteHeapRef): UExpr<USizeSort> = with(ctx) {
+        val valuesArrayDescriptor = arrayDescriptorOf(stringValueField.type as JcArrayType)
+        val stringValue = memory.readField(string, stringValueField.field, addressSort)
+        val length = memory.readArrayLength(stringValue, valuesArrayDescriptor, sizeSort)
+        return length
+    }
+
+    private fun hasConcreteLength(memory: JcConcreteMemory, string: UExpr<out USort>): Boolean {
+        if (string !is UConcreteHeapRef)
+            return false
+        val stringLength = getStringLength(memory, string)
+        val concreteLength = memory.tryExprToInt(stringLength)
+        return concreteLength != null;
+    }
+
     private fun approximateStringMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
         if (method.name == "equals") {
             return scope.calcOnState {
                 this as JcSpringState
+                val memory = memory as JcSpringMemory
                 val first = arguments[0].asExpr(ctx.addressSort)
                 val second = arguments[1].asExpr(ctx.addressSort)
 
-                if (roleStrings.contains(arguments[0]) || roleStrings.contains(arguments[1])) {
+                val hasRoleString = roleStrings.contains(arguments[0]) || roleStrings.contains(arguments[1])
+                val hasConcreteString = hasConcreteLength(memory, first) || hasConcreteLength(memory, second)
+
+                if (hasRoleString && hasConcreteString) {
                     println("Checking role string for equality")
                     val equals = stringEquals(first, second)
                     skipMethodInvocationWithValue(methodCall, equals)
