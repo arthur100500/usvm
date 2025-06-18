@@ -32,7 +32,6 @@ import org.usvm.USort
 import org.usvm.api.makeSymbolicPrimitive
 import org.usvm.api.makeSymbolicRef
 import org.usvm.api.makeSymbolicRefSubtype
-import org.usvm.api.writeField
 import org.usvm.collection.field.UFieldLValue
 import org.usvm.jvm.util.allInstanceFields
 import org.usvm.jvm.util.toJavaClass
@@ -42,13 +41,8 @@ import org.usvm.machine.JcContext
 import org.usvm.machine.JcMethodCall
 import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
-import org.usvm.jvm.util.allInstanceFields
 import org.usvm.jvm.util.findJavaField
 import org.usvm.util.classesOfLocations
-import org.usvm.test.api.spring.WebMvcTest
-import org.usvm.jvm.util.toJavaClass
-import org.usvm.machine.JcConcreteMethodCallInst
-import org.usvm.machine.state.newStmt
 import util.isDeserializationMethod
 import util.isSpringController
 import util.isSpringRepository
