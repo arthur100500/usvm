@@ -99,6 +99,9 @@ class UTestAssertThrowsCall(
     override val method: JcMethod? = null
     override val args: List<UTestExpression> = emptyList()
     override val type: JcType = exceptionClass.classpath.void
+    override fun toString(): String {
+        return "assertThrows(${instList.joinToString { "; " }})"
+    }
 }
 
 class UTestAssertEqualsCall(
