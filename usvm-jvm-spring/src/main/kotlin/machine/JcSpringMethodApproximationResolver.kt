@@ -50,6 +50,7 @@ import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
 import org.usvm.memory.UMemory
 import org.usvm.jvm.util.findJavaField
+import org.usvm.sizeSort
 import org.usvm.util.classesOfLocations
 import util.isDeserializationMethod
 import util.isGrantedAuthority
@@ -603,8 +604,8 @@ class JcSpringMethodApproximationResolver (
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, methods: List<String>, controllerTypeName: String): Boolean {
         val preferredPath = System.getenv("usvm.path") ?: ".*"
-        val preferredMethod = System.getenv("usvm.path") ?: ".*"
-        val methodMatches = methods.any() { Regex(preferredMethod).matches(it) }
+        val preferredMethod = System.getenv("usvm.method") ?: ".*"
+        val methodMatches = methods.any { Regex(preferredMethod).matches(it) }
         return Regex(preferredPath).matches(path) && methodMatches
     }
 
