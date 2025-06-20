@@ -20,11 +20,7 @@ import org.usvm.api.readField
 import org.usvm.api.writeField
 import org.usvm.concrete.api.internal.InitHelper
 import org.usvm.jvm.util.isSameSignatures
-import org.usvm.machine.JcApplicationGraph
-import org.usvm.machine.JcConcreteMethodCallInst
-import org.usvm.machine.JcContext
-import org.usvm.machine.JcMethodApproximationResolver
-import org.usvm.machine.JcMethodCall
+import org.usvm.machine.*
 import org.usvm.machine.state.JcState
 import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
@@ -129,7 +125,7 @@ open class JcConcreteMethodApproximationResolver(
 
                 val parameters = prepareParameters(jcMethod, thisArg, argsArg) ?: return@calcOnState false
                 val postProcessInst = JcReflectionInvokeResult(methodCall, jcMethod)
-                newStmt(JcConcreteMethodCallInst(methodCall.location, jcMethod.method, parameters, postProcessInst))
+                newStmt(JcVirtualMethodCallInst(methodCall.location, jcMethod.method, parameters, postProcessInst))
                 return@calcOnState true
             }
         }
