@@ -52,12 +52,14 @@ dependencies {
 
 // TODO: make versions flexible (JHipster needs 2.7.3, petclinic needs 3.2.0)
 val springVersion = "3.5.0"
+val springSecurityVersion = "6.5.0"
 val junitVersion = "5.3.1"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:$springVersion")
     implementation("org.springframework.boot:spring-boot-starter-test:$springVersion")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springVersion")
+    implementation("org.springframework.security:spring-security-test:$springSecurityVersion")
     implementation("org.apache.xmlbeans:xmlbeans:5.2.1")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf:$springVersion")
     implementation("org.usvm.approximations.java.stdlib:approximations:0.0.0")
@@ -68,6 +70,7 @@ val springTestDeps by configurations.creating
 dependencies {
     springTestDeps("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     springTestDeps("org.springframework.boot:spring-boot-starter-test:$springVersion")
+    springTestDeps("org.springframework.security:spring-security-test:$springSecurityVersion")
 }
 
 fun createOrClear(file: File) {
