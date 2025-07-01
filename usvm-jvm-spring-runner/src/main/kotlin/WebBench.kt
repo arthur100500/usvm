@@ -18,6 +18,7 @@ import machine.interpreter.transformers.springjpa.JcRepositoryCrudTransformer
 import machine.interpreter.transformers.springjpa.JcRepositoryQueryTransformer
 import machine.interpreter.transformers.springjpa.JcRepositoryTransformer
 import org.jacodb.api.jvm.JcByteCodeLocation
+import org.jacodb.api.jvm.JcCacheSegmentSettings
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcDatabase
@@ -207,6 +208,10 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp 
 
         loadByteCode(cpFiles)
 
+        caching {
+            this.classes = JcCacheSegmentSettings(maxSize = 30_000)
+            this.types = JcCacheSegmentSettings(maxSize = 30_000)
+        }
 //        val persistenceLocation = classes.first().parentFile.resolve("jcdb.db")
 //        persistent(persistenceLocation.absolutePath)
     }
