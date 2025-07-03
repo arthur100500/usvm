@@ -1,5 +1,6 @@
 package org.usvm.api;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.usvm.api.internal.SymbolicIdentityMapImpl;
 import org.usvm.api.internal.SymbolicListImpl;
 import org.usvm.api.internal.SymbolicMapImpl;
@@ -16,7 +17,7 @@ public class Engine {
         assert expr;
     }
 
-    public static boolean fastStringEquals(String first, String second) { return first.equals(second); }
+    public static Boolean arrayEquals(Object first, Object second) { return null; }
 
     @SuppressWarnings("unused")
     public static <T> T makeSymbolic(Class<T> clazz) {
