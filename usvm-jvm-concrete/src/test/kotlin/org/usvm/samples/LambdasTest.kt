@@ -1,5 +1,6 @@
-﻿package org.usvm.samples
+package org.usvm.samples
 
+import features.JcEncodingFeature
 import machine.JcConcreteMachine
 import org.jacodb.api.jvm.JcClasspath
 import org.junit.jupiter.api.Test
@@ -9,7 +10,11 @@ import org.usvm.machine.JcMachine
 import org.usvm.samples.approximations.ApproximationsTestRunner
 import org.usvm.test.util.checkers.ignoreNumberOfAnalysisResults
 
-class StringsTest : ApproximationsTestRunner() {
+class LambdasTest : ApproximationsTestRunner() {
+
+    override val cp by lazy {
+        JacoDBContainer(jacodbCpKey, classpath, listOf(JcEncodingFeature)).cp
+    }
 
     override fun createMachine(
         cp: JcClasspath,
@@ -20,23 +25,12 @@ class StringsTest : ApproximationsTestRunner() {
     }
 
     @Test
-    fun checkConcatTest() {
+    fun test1() {
         checkDiscoveredPropertiesWithExceptions(
-            Strings::concatTest,
+            Lambdas::test,
             ignoreNumberOfAnalysisResults,
             invariants = arrayOf(
-                { _, result -> result.getOrNull() == true },
-            )
-        )
-    }
-
-    @Test
-    fun checkStringEqualsTest() {
-        checkDiscoveredPropertiesWithExceptions(
-            Strings::isEqualToAaa,
-            ignoreNumberOfAnalysisResults,
-            invariants = arrayOf(
-                { i, result -> result.getOrNull() == ("Aaa" == i) },
+                { _, r -> r.getOrNull() == true }
             )
         )
     }
