@@ -1,4 +1,7 @@
+import org.jacodb.util.io.writeString
 import java.io.File
+import java.io.PrintStream
+import java.nio.file.Path
 
 enum class ProblemType {
     EXCEPTION,
@@ -21,6 +24,12 @@ data class ForkPoint(
     var wasKilled: Boolean
 )
 
+data class LogSummary(
+    val problems: List<Problem>,
+    val forkPoints: List<ForkPoint>,
+    val coverage: Int
+)
+
 private val DIGITS = "\\d+".toRegex()
 private val STACK_DEPTH_PREFIX = "<\\|\\d+\\|>".toRegex()
 
@@ -37,15 +46,16 @@ fun problemToString(problem: Problem): String {
     return "-----------\nType: ${problem.type.name}\nIn log line: ${problem.line}\nHappened in state ${problem.stateId} with path ${problem.path}\nLine content: ${problem.description}\n"
 }
 
-fun analyzeLog() {
-    val log = File(System.getenv("usvm.log") ?: "springLog.ansi")
-    val summary = File(System.getenv("usvm.errors") ?: "springErrors.ansi")
+fun analyzeLog(logPath: Path): LogSummary {
+    val log = logPath.toFile()
     val statePaths = HashMap<Int, String?>()
     val foundProblems = ArrayList<Problem>()
     val forkPoints = ArrayList<ForkPoint>()
     var currentState = 0
     var lineNumber = 0
     var beforePrintPath = false
+    var beforeCoverage = false
+    var coverage = 0
 
     log.forEachLine {
         lineNumber++
@@ -74,7 +84,7 @@ fun analyzeLog() {
 
         val path: String? = statePaths[currentState]
 
-        if (line.startsWith("exception thrown")) {
+        if (line.startsWith("exception thrown") && !line.contains("java.lang.Throwable")) {
             foundProblems.add(Problem(ProblemType.EXCEPTION, lineNumber, line, currentState, path))
         } else if (line.contains("Assert failed: ")) {
             foundProblems.add(Problem(ProblemType.ASSERT, lineNumber, line, currentState, path))
@@ -85,7 +95,16 @@ fun analyzeLog() {
         } else if (line.startsWith("\u001B[36m") && beforePrintPath) {
             statePaths[currentState] = line
             beforePrintPath = false
-        } else if (line.startsWith("\u001B[34m[")) {
+        } else if (line.startsWith(" Coverage, %")) {
+            beforeCoverage = true
+        } else if (beforeCoverage) {
+            coverage = line
+                .split(" ")
+                .first { it.isNotEmpty() }
+                .toInt()
+            beforeCoverage = false
+        }
+        else if (line.startsWith("\u001B[34m[")) {
             val digits = DIGITS.findAll(line.substring(5)).toList()
             val from = digits[0].value.toInt()
             val to = digits[2].value.toInt()
@@ -99,12 +118,14 @@ fun analyzeLog() {
         println("[Analyzer] Some problems while execution occurred (${foundProblems.size})\n")
     }
 
-    summary.writeText("Analyzer report\n")
-    foundProblems.groupBy { it.type }.forEach { t ->
-        summary.appendText("Problems of type ${t.key}\n")
-        t.value.forEach { p -> summary.appendText(problemToString(p)) }
-    }
+    return LogSummary(foundProblems, forkPoints, coverage)
+}
 
-    summary.appendText("\n\nFork points:\n")
-    forkPoints.forEach { summary.appendText(forkPointToString(it)) }
+fun printLogSummary(summary: LogSummary, output: PrintStream) {
+    output.writeString("Analyzer report\n")
+    output.writeString("Coverage: ${summary.coverage}\n")
+    summary.problems.filter { it.type != ProblemType.EXCEPTION }.groupBy { it.type }.forEach { t ->
+        output.writeString("Problems of type ${t.key}\n")
+        t.value.forEach { p -> output.writeString(problemToString(p)) }
+    }
 }
