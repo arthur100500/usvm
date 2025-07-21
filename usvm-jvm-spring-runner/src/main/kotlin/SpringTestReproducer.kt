@@ -21,7 +21,11 @@ class SpringTestReproducer(
     private fun createExecutor(): UTestConcreteExecutor {
         // TODO #AA Test deps
         val approximations = System.getenv("usvm.jvm.approximations.jar.path")
-        val locations = (options.projectLocations + options.dependenciesLocations).map { it.path } + listOf(approximations)
+        val dependencyJars = options.dependenciesLocations.map { it.jarOrFolder }
+        val dependencies = TestDependenciesManager.getTestDependencies(dependencyJars)
+        val locations = options.projectLocations.map { it.path } +
+                dependencies.map { it.path } +
+                listOf(approximations)
         val opts = UTestExecutionOptions(execMode = InstrumentedProcess.UTestExecMode.RESULT_ONLY)
         val executor = UTestConcreteExecutor(
             instrumentationClassFactory = NoInstrumentationFactory::class,

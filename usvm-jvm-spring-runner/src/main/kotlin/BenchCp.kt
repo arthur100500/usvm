@@ -114,7 +114,7 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>): BenchCp 
     val usvmConcreteApiJarPath = File(System.getenv("usvm.jvm.concrete.api.jar.path"))
     check(usvmConcreteApiJarPath.exists()) { "Concrete API jar does not exist" }
 
-    var cpFiles = classes + dependencies + usvmConcreteApiJarPath
+    var cpFiles = classes + usvmConcreteApiJarPath
     cpFiles += TestDependenciesManager.getTestDependencies(dependencies)
 
     val db = jacodb {
