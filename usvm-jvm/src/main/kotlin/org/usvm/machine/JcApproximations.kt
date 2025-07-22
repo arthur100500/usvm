@@ -1105,6 +1105,17 @@ open class JcMethodApproximationResolver(
                 scope.doWithState { arrayEquals(it, first, second) }
                 null
             }
+            dispatchMkRef2(Engine::makeConcreteArray) {
+                val (elementClassRefExpr, sizeExpr) = it.arguments
+
+                val elementClassRef = elementClassRefExpr.asExpr(ctx.addressSort)
+                val elementTypeRepresentative = scope.calcOnState {
+                    memory.read(UFieldLValue(ctx.addressSort, elementClassRef, ctx.classTypeSyntheticField))
+                }
+                check(elementTypeRepresentative is UConcreteHeapRef)
+                val type = scope.calcOnState { memory.types.getTypeStream(elementTypeRepresentative).single() }
+                makeConcreteArray(type, sizeExpr)
+            }
             dispatchMkList(Engine::makeSymbolicList) {
                 scope.calcOnState { mkSymbolicList(symbolicListType) }
             }
@@ -1353,6 +1364,19 @@ open class JcMethodApproximationResolver(
         scope.doWithState {
             memory.write(lengthRef, sizeValue)
         }
+
+        return address
+    }
+
+    private fun makeConcreteArray(elementType: JcType, size: UExpr<*>): UHeapRef {
+        val arrayType = ctx.cp.arrayTypeOf(elementType)
+        val sizeValue = size.asExpr(ctx.sizeSort)
+
+        val address = scope.calcOnState { memory.allocConcrete(arrayType) }
+
+        val arrayDescriptor = ctx.arrayDescriptorOf(arrayType)
+        val lengthRef = UArrayLengthLValue(address, arrayDescriptor, ctx.sizeSort)
+        scope.doWithState { memory.write(lengthRef, sizeValue) }
 
         return address
     }
