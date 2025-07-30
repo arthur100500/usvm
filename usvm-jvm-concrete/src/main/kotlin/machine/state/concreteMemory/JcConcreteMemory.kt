@@ -59,6 +59,7 @@ import machine.state.concreteMemory.concreteMemoryRegions.JcConcreteRegion
 import machine.state.concreteMemory.concreteMemoryRegions.JcConcreteStaticFieldsRegion
 import org.usvm.UBoolExpr
 import org.usvm.api.util.JcTestStateResolver
+import org.usvm.concrete.api.internal.ClassLoaderGetHelper
 import org.usvm.concrete.api.internal.InitHelper
 import org.usvm.jvm.util.toJavaClass
 import org.usvm.machine.state.newStmt
@@ -325,7 +326,9 @@ open class JcConcreteMemory(
                         enclosingClass.isEnum && method.isConstructor ||
                         // Case for method, which exists only in approximations
                         method is JcEnrichedVirtualMethod && !method.isClassInitializer && method.toJavaMethod == null ||
-                        enclosingClass.isInternalType && enclosingClass.name != InitHelper::class.java.typeName ||
+                        enclosingClass.isInternalType &&
+                        enclosingClass.name != InitHelper::class.java.typeName &&
+                        enclosingClass.name != ClassLoaderGetHelper::class.java.typeName ||
                         shouldNotInvoke(method)
                 )
     }

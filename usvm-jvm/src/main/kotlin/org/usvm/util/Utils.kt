@@ -13,11 +13,11 @@ import org.usvm.memory.UWritableMemory
 import org.usvm.uctx
 import kotlin.reflect.KClass
 
-fun JcContext.classesOfLocations(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> {
+fun JcClasspath.classesOfLocations(locations: List<JcByteCodeLocation>): Sequence<JcClassOrInterface> {
     return locations
         .asSequence()
         .flatMap { it.classNames ?: emptySet() }
-        .mapNotNull { cp.findClassOrNull(it) }
+        .mapNotNull { findClassOrNull(it.removePrefix("BOOT-INF.classes.")) }
         .filterNot { it is JcUnknownClass }
 }
 

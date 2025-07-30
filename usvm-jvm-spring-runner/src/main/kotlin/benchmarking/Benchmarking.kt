@@ -18,10 +18,13 @@ import kotlin.time.Duration.Companion.minutes
 fun main() {
     val benchmark = getBenchmark()
     val stdout = System.out
-    println(benchmark.benchPath)
+    println(benchmark.jarPath)
     val benchCp = logTime("Init jacodb") {
-        val benchDir = benchmark.benchPath
-        loadWebAppBenchCp(benchDir / "classes", benchDir / "lib")
+        loadWebAppBenchCp(
+            benchmark.jarPath,
+            benchmark.libsPath,
+            benchmark.propertiesName
+        )
     }
     logTime("Analysis ALL") {
         benchCp.use { runBenchmark(it, benchmark) }
@@ -41,7 +44,7 @@ private fun runBenchmark(bench: BenchCp, benchDescription: BenchDescription) {
         coverageZone = CoverageZone.METHOD,
         exceptionsPropagation = false,
         stepLimit = 200000u,
-        timeout = 5.minutes,
+        timeout = Duration.INFINITE,
         solverType = SolverType.YICES,
         loopIterationLimit = 2,
         solverTimeout = Duration.INFINITE, // we do not need the timeout for a solver in tests
@@ -54,6 +57,8 @@ private fun runBenchmark(bench: BenchCp, benchDescription: BenchDescription) {
 private fun getBenchmark(): BenchDescription {
     return BenchDescription(
         Path.of(System.getProperty("usvm.benchmark")),
+        Path.of(System.getProperty("usvm.libs")),
+        System.getProperty("usvm.properties"),
         Path.of(System.getProperty("usvm.log")),
         Path.of(System.getProperty("usvm.errors"))
     )

@@ -18,6 +18,7 @@ import org.usvm.USort
 import org.usvm.api.readArrayIndex
 import org.usvm.api.readField
 import org.usvm.api.writeField
+import org.usvm.concrete.api.internal.ClassLoaderGetHelper
 import org.usvm.concrete.api.internal.InitHelper
 import org.usvm.jvm.util.isSameSignatures
 import org.usvm.machine.JcApplicationGraph
@@ -74,6 +75,11 @@ open class JcConcreteMethodApproximationResolver(
 
         if (className == InitHelper::class.java.typeName) {
             scope.doWithState { skipMethodInvocationWithValue(methodCall, ctx.voidValue) }
+            return true
+        }
+
+        if (className == ClassLoaderGetHelper::class.java.typeName) {
+            scope.doWithState { skipMethodInvocationWithValue(methodCall, ctx.nullRef) }
             return true
         }
 

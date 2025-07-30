@@ -556,7 +556,7 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, methods: List<String>, controllerTypeName: String): Boolean {
-        return true
+        return path == "/acl/request/{aclRequestId}"
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {
@@ -596,7 +596,7 @@ class JcSpringMethodApproximationResolver (
     }
 
     private fun getHandlerData(): List<HandlerMethodData> {
-        val controllerTypes = ctx.classesOfLocations(jcConcreteMachineOptions.projectLocations)
+        val controllerTypes = ctx.cp.classesOfLocations(jcConcreteMachineOptions.projectLocations)
             .filter { !it.isAbstract && !it.isInterface && !it.isAnonymous && it.isSpringController }
             .filterNot { shouldSkipController(it) }
 

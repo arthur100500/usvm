@@ -51,7 +51,7 @@ class JcSpringMachine(
     }
 
     override fun methodsToTrackCoverage(methods: List<JcMethod>): Set<JcMethod> {
-        return ctx.classesOfLocations(jcConcreteMachineOptions.projectLocations)
+        return ctx.cp.classesOfLocations(jcConcreteMachineOptions.projectLocations)
             .filter { it.isSpringController || it.isSpringFilter || it.isSpringHandlerInterceptor }
             .flatMap { it.declaredMethods }
             .filterNot { it is JcUnknownMethod || it.isConstructor }

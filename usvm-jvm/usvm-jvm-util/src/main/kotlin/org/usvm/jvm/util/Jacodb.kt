@@ -217,7 +217,7 @@ fun JcClasspath.nonAbstractClasses(locations: List<JcByteCodeLocation>): Sequenc
     locations
         .asSequence()
         .flatMap { it.classNames ?: emptySet() }
-        .mapNotNull { findClassOrNull(it) }
+        .mapNotNull { findClassOrNull(it.removePrefix("BOOT-INF.classes.")) }
         .filterNot { it is JcUnknownClass }
         .filterNot { it.isAbstract || it.isInterface || it.isAnonymous }
         .sortedBy { it.name }

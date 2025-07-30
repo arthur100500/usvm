@@ -10,10 +10,17 @@ repositories {
 }
 
 dependencies {
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
+    implementation("org.springframework.boot:spring-boot-starter-test:3.3.4")
+    implementation("org.liquibase:liquibase-core:4.27.0")
+
     implementation(project(":usvm-jvm"))
     implementation(project(":usvm-jvm-instrumentation"))
     implementation(project(":usvm-jvm-concrete"))
     implementation(project(":usvm-jvm-spring"))
+    implementation(project(":usvm-jvm-spring:usvm-jvm-spring-util"))
     implementation(project(":usvm-jvm-spring:usvm-jvm-spring-test-api"))
     implementation(project(":usvm-jvm-rendering"))
     implementation(project(":usvm-core"))
@@ -64,6 +71,19 @@ dependencies {
 val agentJarConfiguration by configurations.creating
 dependencies {
     agentJarConfiguration(project(":usvm-jvm-concrete:agent"))
+}
+
+// TODO: make versions flexible (JHipster needs 2.7.3, petclinic needs 3.2.0)
+val springVersion = "3.3.4"
+val springSecurityVersion = "6.3.3"
+val junitVersion = "5.3.1"
+
+val springTestDeps by configurations.creating
+
+dependencies {
+    springTestDeps("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    springTestDeps("org.springframework.boot:spring-boot-starter-test:$springVersion")
+    springTestDeps("org.springframework.security:spring-security-test:$springSecurityVersion")
 }
 
 fun createOrClear(file: File) {
@@ -266,7 +286,7 @@ val benchmarkFolder = currentDir / "bench-jars"
 val benchmarkLogsFolder = currentDir / "bench-logs"
 val benchmarkErrorsFolder = currentDir /  "bench-errors"
 
-fun loadBenchmark(jarName: String): Benchmark {
+fun loadBenchmark(jarName: String, propertiesPath: String? = null): Benchmark {
     val benchmark = benchmarkFolder.toFile().listFiles()?.first { it.isFile && it.name == jarName }
     val destinationFolder = benchmarkFolder / "unpacked"
     check(benchmark != null) { "Cannot find benchmark $jarName" }
@@ -276,14 +296,19 @@ fun loadBenchmark(jarName: String): Benchmark {
     val logFile = (benchmarkLogsFolder / "${benchmarkName}_log.ansi").toFile()
     val errorsFile = (benchmarkErrorsFolder / "${benchmarkName}_errors.ansi").toFile()
     unzipTo(destination, benchmark)
-    val bootInf = destination.toPath() / "BOOT-INF"
-    return Benchmark(bootInf.toFile(), logFile, errorsFile, benchmarkName)
+
+    val jarPath = benchmark
+    val libsPath = (destinationFolder / benchmarkName / "BOOT-INF" / "lib").toFile()
+
+    return Benchmark(jarPath, libsPath, propertiesPath, logFile, errorsFile, benchmarkName)
 }
 
 private fun fillProperties(benchmark: Benchmark, task: JavaExec) {
-    task.systemProperty("usvm.benchmark", benchmark.path.absolutePath)
+    task.systemProperty("usvm.benchmark", benchmark.jarPath.absolutePath)
+    task.systemProperty("usvm.libs", benchmark.libsPath.absolutePath)
     task.systemProperty("usvm.log", benchmark.logPath.absolutePath)
     task.systemProperty("usvm.errors", benchmark.errorsPath.absolutePath)
+    benchmark.propertiesPath?.also { task.systemProperty("usvm.properties", it) }
 }
 
 tasks.register<JavaExec>("benchmarkPetClinic") {
@@ -293,7 +318,7 @@ tasks.register<JavaExec>("benchmarkPetClinic") {
 }
 
 tasks.register<JavaExec>("benchmarkKlaw") {
-    fillProperties(loadBenchmark("klaw-2.10.1.jar"), this)
+    fillProperties(loadBenchmark("klaw-2.9.0.jar", "classpath:test-application-rdbms-ad-authorization.properties"), this)
     mainClass.set("benchmarking.BenchmarkingKt")
     configureSpringAnalysis(this)
 }
@@ -325,8 +350,10 @@ tasks.register("runBenchmarks") {
 }
 
 data class Benchmark(
-    val path: File,
+    val jarPath: File,
+    val libsPath: File,
+    val propertiesPath: String?,
     val logPath: File,
     val errorsPath: File,
-    val name: String
+    val name: String,
 )
