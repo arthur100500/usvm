@@ -177,7 +177,7 @@ const val DATA_ROW = "generated.org.springframework.boot.databases.utils.DataRow
 
 const val IWRAPPER = "generated.org.springframework.boot.databases.wrappers.IWrapper"
 const val PAGE_WRAPPER = "org.springframework.data.domain.Page"
-const val PAGE_IMPL_WRAPPER = "common.org.springframework.data.domain.PageImpl"
+const val PAGE_IMPL_WRAPPER = "org.springframework.data.domain.PageImpl"
 const val SET_WRAPPER = "generated.org.springframework.boot.databases.wrappers.SetWrapper"
 const val LIST_WRAPPER = "generated.org.springframework.boot.databases.wrappers.ListWrapper"
 const val IMMUTABLE_SET_WRAPPER = "generated.org.springframework.boot.databases.wrappers.immutable.ImmutableSetWrapper"

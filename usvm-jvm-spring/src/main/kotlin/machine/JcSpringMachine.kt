@@ -8,6 +8,7 @@ import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.impl.features.classpaths.JcUnknownMethod
 import org.usvm.UMachineOptions
 import org.usvm.UPathSelector
+import org.usvm.jvm.util.classesOfLocations
 import org.usvm.machine.JcInterpreterObserver
 import org.usvm.machine.JcLoopTracker
 import org.usvm.machine.JcMachineOptions
@@ -20,7 +21,6 @@ import org.usvm.statistics.TimeStatistics
 import org.usvm.statistics.UMachineObserver
 import org.usvm.statistics.collectors.StatesCollector
 import org.usvm.statistics.distances.CallGraphStatistics
-import org.usvm.util.classesOfLocations
 import util.isSpringController
 import util.isSpringFilter
 import util.isSpringHandlerInterceptor
