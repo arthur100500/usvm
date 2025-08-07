@@ -134,10 +134,6 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
         if (name.isNullOrEmpty())
             return null
 
-        if (name == "io/aiven/klaw/dao/migration") {
-            println()
-        }
-
         val result = mutableListOf<URL>()
         for (loc in cp.locations) {
             val locFile = loc.jarOrFolder
