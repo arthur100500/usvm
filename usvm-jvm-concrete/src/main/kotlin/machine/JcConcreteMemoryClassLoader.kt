@@ -63,6 +63,7 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
         return this.name == name
                 || relativePath == name
                 || relativePath.endsWith(name)
+                || relativePath.endsWith(name + "/")
     }
 
     private fun JarEntry.matchResource(name: String, single: Boolean): Boolean {
@@ -132,6 +133,10 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
     private fun internalFindResources(name: String?, single: Boolean): Enumeration<URL>? {
         if (name.isNullOrEmpty())
             return null
+
+        if (name == "io/aiven/klaw/dao/migration") {
+            println()
+        }
 
         val result = mutableListOf<URL>()
         for (loc in cp.locations) {

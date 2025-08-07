@@ -10,12 +10,6 @@ repositories {
 }
 
 dependencies {
-
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
-    implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
-    implementation("org.springframework.boot:spring-boot-starter-test:3.3.4")
-    implementation("org.liquibase:liquibase-core:4.27.0")
-
     implementation(project(":usvm-jvm"))
     implementation(project(":usvm-jvm-instrumentation"))
     implementation(project(":usvm-jvm-concrete"))
@@ -289,18 +283,24 @@ val benchmarkErrorsFolder = currentDir /  "bench-errors"
 fun loadBenchmark(jarName: String, propertiesPath: String? = null): Benchmark {
     val benchmark = benchmarkFolder.toFile().listFiles()?.first { it.isFile && it.name == jarName }
     val destinationFolder = benchmarkFolder / "unpacked"
+    val libsFolder = benchmarkFolder / "bench-libs"
     check(benchmark != null) { "Cannot find benchmark $jarName" }
+
     val benchmarkName = benchmark.name.removeSuffix(".jar")
-    val destination = (destinationFolder / benchmarkName).toFile()
-    createOrClear(destination)
+    val destination = destinationFolder / benchmarkName
+    createOrClear(destination.toFile())
+
     val logFile = (benchmarkLogsFolder / "${benchmarkName}_log.ansi").toFile()
     val errorsFile = (benchmarkErrorsFolder / "${benchmarkName}_errors.ansi").toFile()
-    unzipTo(destination, benchmark)
+    unzipTo(destination.toFile(), benchmark)
 
-    val jarPath = benchmark
-    val libsPath = (destinationFolder / benchmarkName / "BOOT-INF" / "lib").toFile()
+    val newLibs = (libsFolder / benchmarkName).toFile()
+    val oldLibs = (destination / "BOOT-INF" / "lib").toFile()
 
-    return Benchmark(jarPath, libsPath, propertiesPath, logFile, errorsFile, benchmarkName)
+    newLibs.deleteRecursively()
+    oldLibs.copyRecursively(newLibs)
+    oldLibs.deleteRecursively()
+    return Benchmark(destination.toFile(), newLibs, propertiesPath, logFile, errorsFile, benchmarkName)
 }
 
 private fun fillProperties(benchmark: Benchmark, task: JavaExec) {
