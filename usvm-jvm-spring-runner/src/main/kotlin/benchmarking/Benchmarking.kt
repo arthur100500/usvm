@@ -43,7 +43,7 @@ private fun runBenchmark(bench: BenchCp, benchDescription: BenchDescription) {
         pathSelectionStrategies = listOf(PathSelectionStrategy.BFS),
         coverageZone = CoverageZone.METHOD,
         exceptionsPropagation = false,
-        stepLimit = 200000u,
+        stepLimit = 10000u,
         timeout = Duration.INFINITE,
         solverType = SolverType.YICES,
         loopIterationLimit = 2,

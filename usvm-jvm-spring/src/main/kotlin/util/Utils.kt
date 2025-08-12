@@ -2,6 +2,7 @@ package util
 
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcMethod
+import org.jacodb.api.jvm.ext.findClassOrNull
 import org.jacodb.api.jvm.ext.isSubClassOf
 
 internal val JcClassOrInterface.isSpringFilter: Boolean
@@ -16,6 +17,14 @@ internal val JcClassOrInterface.isSpringFilterChain: Boolean
         val filterType = classpath.findClassOrNull("jakarta.servlet.FilterChain")
             ?: return false
         return isSubClassOf(filterType)
+    }
+
+internal val JcClassOrInterface.isFilterObservation: Boolean
+    get() {
+        val observerType = classpath.findClassOrNull(
+            "org.springframework.security.web.ObservationFilterChainDecorator\$FilterObservation"
+        ) ?: return false
+        return isSubClassOf(observerType)
     }
 
 internal val JcClassOrInterface.isSpringHandlerInterceptor: Boolean
@@ -61,6 +70,9 @@ internal val JcMethod.isSpringFilterMethod: Boolean
 
 internal val JcMethod.isSpringFilterChainMethod: Boolean
     get() = enclosingClass.isSpringFilterChain
+
+internal val JcMethod.isFilterObservationMethod: Boolean
+    get() = enclosingClass.isFilterObservation
 
 private val argumentResolverMethods = setOf("convertIfNecessary", "resolveArgument", "resolveName", "handleNullValue")
 
