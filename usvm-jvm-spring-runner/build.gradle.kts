@@ -89,6 +89,7 @@ fun createOrClear(file: File) {
 }
 
 fun configureSpringAnalysis(task: JavaExec) = with(task) {
+
     classpath = sourceSets.test.get().runtimeClasspath
 
     systemProperty("jdk.util.jar.enableMultiRelease", false)
@@ -104,19 +105,19 @@ fun configureSpringAnalysis(task: JavaExec) = with(task) {
     createOrClear(springDir)
     environment("springDir", springDir.absolutePath)
 
-    val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.single()
+    val usvmApiJarPath = usvmApiJarConfiguration.resolvedConfiguration.files.singleOrNull() ?: error("jvm api")
     environment("usvm.jvm.api.jar.path", usvmApiJarPath.absolutePath)
 
-    val usvmApproximationJarPath = approximations.resolvedConfiguration.files.single()
+    val usvmApproximationJarPath = approximations.resolvedConfiguration.files.singleOrNull() ?: error("approx base")
     environment("usvm.jvm.approximations.jar.path", usvmApproximationJarPath.absolutePath)
 
-    val usvmConcreteApiJarPath = usvmConcreteApiJarConfiguration.resolvedConfiguration.files.single()
+    val usvmConcreteApiJarPath = usvmConcreteApiJarConfiguration.resolvedConfiguration.files.singleOrNull() ?: error("concrete api")
     environment("usvm.jvm.concrete.api.jar.path", usvmConcreteApiJarPath)
 
-    val usvmSpringApiJarPath = usvmSpringApiJarConfiguration.resolvedConfiguration.files.single()
+    val usvmSpringApiJarPath = usvmSpringApiJarConfiguration.resolvedConfiguration.files.singleOrNull() ?: error("spring api")
     environment("usvm.jvm.spring.api.jar.path", usvmSpringApiJarPath.absolutePath)
 
-    val usvmSpringApproximationJarPath = springApproximations.resolvedConfiguration.files.single()
+    val usvmSpringApproximationJarPath = springApproximations.resolvedConfiguration.files.singleOrNull() ?: error("approx spring")
     environment("usvm.jvm.spring.approximations.jar.path", usvmSpringApproximationJarPath.absolutePath)
 
     environment(
@@ -137,7 +138,7 @@ fun configureSpringAnalysis(task: JavaExec) = with(task) {
             .get().asFile.absolutePath
     )
 
-    val agentJarPath = agentJarConfiguration.resolvedConfiguration.files.single()
+    val agentJarPath = agentJarConfiguration.resolvedConfiguration.files.singleOrNull() ?: error("agent")
 
     jvmArgs = listOf("-Xmx12g") + mutableListOf<String>().apply {
         add("-Djava.security.manager -Djava.security.policy=webExplorationPolicy.policy")
@@ -281,7 +282,7 @@ val benchmarkLogsFolder = currentDir / "bench-logs"
 val benchmarkErrorsFolder = currentDir /  "bench-errors"
 
 fun loadBenchmark(jarName: String, propertiesPath: String? = null): Benchmark {
-    val benchmark = benchmarkFolder.toFile().listFiles()?.first { it.isFile && it.name == jarName }
+    val benchmark = benchmarkFolder.toFile().listFiles()?.firstOrNull { it.isFile && it.name == jarName } ?: error("bench file")
     val destinationFolder = benchmarkFolder / "unpacked"
     val libsFolder = benchmarkFolder / "bench-libs"
     check(benchmark != null) { "Cannot find benchmark $jarName" }
