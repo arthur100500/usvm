@@ -2,7 +2,6 @@ package util
 
 import org.jacodb.api.jvm.JcClassOrInterface
 import org.jacodb.api.jvm.JcMethod
-import org.jacodb.api.jvm.ext.findClassOrNull
 import org.jacodb.api.jvm.ext.isSubClassOf
 
 internal val JcClassOrInterface.isSpringFilter: Boolean
@@ -20,12 +19,19 @@ internal val JcClassOrInterface.isSpringFilterChain: Boolean
     }
 
 internal val JcClassOrInterface.isFilterObservation: Boolean
-    get() {
-        val observerType = classpath.findClassOrNull(
-            "org.springframework.security.web.ObservationFilterChainDecorator\$FilterObservation"
-        ) ?: return false
-        return isSubClassOf(observerType)
-    }
+    get() = classpath.findClassOrNull(
+        "org.springframework.security.web.ObservationFilterChainDecorator\$FilterObservation"
+    )?.let { isSubClassOf(it) } ?: false
+
+internal val JcClassOrInterface.isObservationContext: Boolean
+    get() = classpath.findClassOrNull(
+        "io.micrometer.observation.Observation\$Context"
+    )?.let { isSubClassOf(it) } ?: false
+
+internal val JcClassOrInterface.isFilterChainDecorator: Boolean
+    get() = classpath.findClassOrNull(
+        "org.springframework.security.web.FilterChainProxy\$FilterChainDecorator"
+    )?.let { isSubClassOf(it) } ?: false
 
 internal val JcClassOrInterface.isSpringHandlerInterceptor: Boolean
     get() {

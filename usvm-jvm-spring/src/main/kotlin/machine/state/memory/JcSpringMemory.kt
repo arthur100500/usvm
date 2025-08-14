@@ -28,6 +28,7 @@ class JcSpringMemory(
 
     override fun shouldNotInvoke(method: JcMethod): Boolean {
         return super.shouldNotInvoke(method) ||
+                method.enclosingClass.name.contains("$\$SpringCGLIB$$") ||
                 forbiddenInvocations.contains(method.humanReadableSignature) ||
                 method.isSpringFilterMethod ||
                 method.isSpringFilterChainMethod ||

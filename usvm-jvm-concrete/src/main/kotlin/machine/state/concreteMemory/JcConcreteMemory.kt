@@ -1,6 +1,8 @@
 package machine.state.concreteMemory
 
 import io.ksmt.utils.asExpr
+import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 import machine.JcConcreteInvocationResult
 import machine.JcConcreteMachineOptions
 import machine.JcConcreteMemoryClassLoader
