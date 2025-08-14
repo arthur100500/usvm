@@ -556,7 +556,7 @@ class JcSpringMethodApproximationResolver (
 
     @Suppress("UNUSED_PARAMETER")
     private fun shouldAnalyzePath(path: String, methods: List<String>, controllerTypeName: String): Boolean {
-        return path == "/acl/request/{aclRequestId}"
+        return true
     }
 
     private fun shouldSkipController(controllerType: JcClassOrInterface): Boolean {

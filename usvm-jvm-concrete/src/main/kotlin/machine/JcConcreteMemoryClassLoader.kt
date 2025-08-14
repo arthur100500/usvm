@@ -308,6 +308,9 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
                     || it.isInstrumentedGetClassLoader
         }
 
+        if (jcClass.name == "com.sopromadze.blogapi.NewSpringBootTestClass")
+            println()
+
         if (instrumentedMethods.isEmpty())
             return jcClass.bytecode()
 

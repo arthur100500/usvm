@@ -129,3 +129,10 @@ fun printLogSummary(summary: LogSummary, output: PrintStream) {
         t.value.forEach { p -> output.writeString(problemToString(p)) }
     }
 }
+
+fun printForks(summary: LogSummary, output: PrintStream) {
+    output.writeString("Analyzer report\n")
+    summary.forkPoints.filter { !it.wasKilled }.forEach {
+        p -> output.writeString(forkPointToString(p))
+    }
+}

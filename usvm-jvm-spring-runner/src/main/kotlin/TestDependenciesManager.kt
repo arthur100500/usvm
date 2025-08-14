@@ -48,7 +48,9 @@ object TestDependenciesManager {
     }
 
     private fun versionToNumber(version: String): Int {
-        return version.split(".").map { it.toInt() }.fold(0) { acc, i -> acc * 100 + i }
+        return version.split(".")
+            .mapNotNull { it.toIntOrNull() }
+            .fold(0) { acc, i -> acc * 100 + i }
     }
 
     fun getSpringBootVersion(classes: List<File>): String? {

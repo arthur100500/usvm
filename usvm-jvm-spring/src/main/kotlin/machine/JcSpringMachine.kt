@@ -2,6 +2,7 @@ package machine
 
 import machine.ps.JcSpringMachineLoopTracker
 import machine.ps.JcStatePathTimeoutPathSelector
+import machine.state.JcSpringState
 import org.jacodb.api.jvm.JcClasspath
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.cfg.JcInst

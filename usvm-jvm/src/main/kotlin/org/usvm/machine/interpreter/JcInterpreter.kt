@@ -170,7 +170,7 @@ open class JcInterpreter(
 
         val formattedStateId = state.id.toString()
         val methodNameWithClass = stmt.method.enclosingClass.name.split(".").last() + "#" + stmt.method.name + " " + stmt.toString()
-        println("[$formattedStateId] $methodNameWithClass")
+        // println("[$formattedStateId] $methodNameWithClass")
 
         when (stmt) {
             is JcMethodCallBaseInst -> visitMethodCall(scope, stmt)

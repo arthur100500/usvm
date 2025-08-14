@@ -31,6 +31,19 @@ dependencies {
     implementation(Libs.logback)
 }
 
+val springVersion = "2.1.8.RELEASE"
+val springSecurityVersion = "5.1.9.RELEASE"
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web:$springVersion")
+    implementation("org.springframework.boot:spring-boot-starter-test:$springVersion")
+    implementation("org.springframework.security:spring-security-test:$springSecurityVersion")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springVersion")
+    implementation("org.apache.xmlbeans:xmlbeans:5.2.1")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf:$springVersion")
+    implementation("org.usvm.approximations.java.stdlib:approximations:0.0.0")
+}
+
 val usvmApiJarConfiguration by configurations.creating
 dependencies {
     usvmApiJarConfiguration(project(":usvm-jvm:usvm-jvm-api"))
@@ -65,19 +78,6 @@ dependencies {
 val agentJarConfiguration by configurations.creating
 dependencies {
     agentJarConfiguration(project(":usvm-jvm-concrete:agent"))
-}
-
-// TODO: make versions flexible (JHipster needs 2.7.3, petclinic needs 3.2.0)
-val springVersion = "3.3.4"
-val springSecurityVersion = "6.3.3"
-val junitVersion = "5.3.1"
-
-val springTestDeps by configurations.creating
-
-dependencies {
-    springTestDeps("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    springTestDeps("org.springframework.boot:spring-boot-starter-test:$springVersion")
-    springTestDeps("org.springframework.security:spring-security-test:$springSecurityVersion")
 }
 
 fun createOrClear(file: File) {
@@ -325,7 +325,7 @@ tasks.register<JavaExec>("benchmarkKlaw") {
 }
 
 tasks.register<JavaExec>("benchmarkBlogApi") {
-    fillProperties(loadBenchmark("blogapi-0.0.1-SNAPSHOT.jar"), this)
+    fillProperties(loadBenchmark("blogapi-2.1.8.jar", "classpath:application.properties"), this)
     mainClass.set("benchmarking.BenchmarkingKt")
     configureSpringAnalysis(this)
 }
@@ -345,7 +345,7 @@ tasks.register<JavaExec>("analyzeBenchmarks") {
 tasks.register("runBenchmarks") {
     createOrClear(benchmarkLogsFolder.toFile())
     createOrClear(benchmarkErrorsFolder.toFile())
-    val usedBenches = listOf("benchmarkPetClinic", "benchmarkBlogApi", "benchmarkBenches")
+    val usedBenches = listOf("benchmarkBlogApi")
     dependsOn(usedBenches)
     dependsOn("analyzeBenchmarks").mustRunAfter(usedBenches)
 }

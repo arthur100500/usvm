@@ -121,7 +121,9 @@ private fun loadBenchCp(classes: List<File>, dependencies: List<File>, propertie
 
     val allDependencies = TestDependenciesManager.getTestDependencies(dependencies)
     val cpFiles = classes + usvmConcreteApiJarPath + allDependencies
-    val springBootVersion = TestDependenciesManager.getSpringBootVersion(dependencies)
+    val springBootVersion = TestDependenciesManager
+        .getSpringBootVersion(dependencies)
+        ?.replace(".RELEASE", "")
 
     check(springBootVersion != null) { "Spring boot was not found in dependencies" }
 

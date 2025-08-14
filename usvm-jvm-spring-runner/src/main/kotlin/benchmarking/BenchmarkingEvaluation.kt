@@ -1,6 +1,7 @@
 package benchmarking
 
 import analyzeLog
+import printForks
 import printLogSummary
 import java.io.File
 
@@ -25,4 +26,5 @@ private fun analyzeBenchResults(logPath: File, name: String) {
         println("$name has problems")
     }
     printLogSummary(summary, System.out)
+    printForks(summary, System.out)
 }
