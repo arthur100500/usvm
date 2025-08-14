@@ -47,7 +47,9 @@ class RelationMap<T> {
 
     private fun combName(clazz: JcClassOrInterface, field: JcField) = "${clazz.name}_${field.name}"
 
-    fun get(clazz: JcClassOrInterface, field: JcField) = data[combName(clazz, field)]!!
+    fun get(clazz: JcClassOrInterface, field: JcField) = data[combName(clazz, field)]
+        ?: error("cannot get from relation map by ${combName(clazz, field)}")
+
     fun add(clazz: JcClassOrInterface, field: JcField, t: T) {
         val name = combName(clazz, field)
         val value = data.getOrDefault(name, emptySet())

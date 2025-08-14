@@ -413,7 +413,8 @@ class JcBuildIdTransformer(
         val ids = when (idCol) {
             is IdColumnInfo.SingleId, is IdColumnInfo.ClassId -> {
                 idCol.orderedSimpleIds().mapIndexed { ix, col ->
-                    val getter = classType.declaredMethods.single { it.method.generatedGetter(col.name, false) }
+                    val getter = classType.declaredMethods.singleOrNull { it.method.generatedGetter(col.name, false) }
+                        ?: error("no getter found on generating for method ${method.enclosingClass.name}#${method.name}")
                     generateVirtualCall("id_part_$ix", getter.name, classType, thisVal, emptyList())
                 }
             }
@@ -422,7 +423,8 @@ class JcBuildIdTransformer(
                 val embeddedType = cp.findType(idCol.embeddedClassName) as JcClassType
                 val embeddedVar = nextLocalVar("embedded_id", embeddedType)
 
-                val embeddedIdField = classType.fields.single { it.type.typeName.equals(idCol.embeddedClassName) }
+                val embeddedIdField = classType.fields.singleOrNull { it.type.typeName.equals(idCol.embeddedClassName) }
+                    ?: error("no embeddedIdField for ${classType.name}")
                 val embeddedFieldRef = JcFieldRef(thisVal, embeddedIdField)
                 addInstruction { loc -> JcAssignInst(loc, embeddedVar, embeddedFieldRef) }
 
@@ -771,7 +773,8 @@ class JcSerializerTransformer(
             if (!(skipGeneratedFields && !col.isOrig)) {
                 (if (col.isOrig) listOf(col.origField) else relationChecks.get(clazz, col.origField)).forEach {
                     val fieldVar = nextLocalVar("${it.name}_field_${ix}", col.type.toJcType(cp)!!)
-                    val field = it.enclosingClass.toType().fields.single { fld -> fld.name == it.name }
+                    val field = it.enclosingClass.toType().fields.singleOrNull { fld -> fld.name == it.name }
+                        ?: error("no field ${it.name} found for ${it.enclosingClass.name}")
                     val fieldRef = JcFieldRef(JcThis(classType), field)
                     addInstruction { loc -> JcAssignInst(loc, fieldVar, fieldRef) }
 
