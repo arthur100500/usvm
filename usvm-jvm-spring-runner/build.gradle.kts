@@ -41,8 +41,8 @@ dependencies {
 }
 
 val approximations by configurations.creating
-val approximationsRepo = "org.usvm.approximations.java.stdlib"
-val approximationsVersion = "0.0.0"
+val approximationsRepo = "com.github.UnitTestBot.java-stdlib-approximations"
+val approximationsVersion = "aa9e358446"
 
 dependencies {
     approximations(approximationsRepo, "approximations", approximationsVersion)
