@@ -18,6 +18,7 @@ import org.jacodb.api.jvm.MethodNotFoundException
 import org.jacodb.api.jvm.TypeName
 import org.jacodb.api.jvm.cfg.JcInst
 import org.jacodb.api.jvm.ext.findFieldOrNull
+import org.jacodb.api.jvm.ext.humanReadableSignature
 import org.jacodb.api.jvm.ext.jcdbName
 import org.jacodb.api.jvm.ext.jcdbSignature
 import org.jacodb.api.jvm.ext.toType
@@ -34,6 +35,7 @@ import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.jacodb.impl.types.JcClassTypeImpl
 import org.jacodb.impl.types.TypeNameImpl
 import org.objectweb.asm.tree.MethodNode
+import org.usvm.jvm.util.JcCpWithoutApproximations.JcClassWithoutApproximations
 import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
@@ -287,7 +289,7 @@ class JcCpWithoutApproximations(val cp: JcClasspath) : JcClasspath by cp {
 
     private val classWithoutApproximationsCache = hashMapOf<JcClassOrInterface, JcClassWithoutApproximations>()
 
-    private val JcClassOrInterface.withoutApproximations: JcClassOrInterface get() {
+    val JcClassOrInterface.withoutApproximations: JcClassOrInterface get() {
         if (this is JcClassWithoutApproximations) return this
 
         check(classpath === cp)
@@ -297,7 +299,13 @@ class JcCpWithoutApproximations(val cp: JcClasspath) : JcClasspath by cp {
         }
     }
 
-    private val JcField.withoutApproximations: JcField? get() {
+    val JcMethod.withoutApproximations: JcMethod? get() {
+        return this.enclosingClass.withoutApproximations.declaredMethods.find {
+            this.name == it.name && this.description == it.description
+        }
+    }
+
+    val JcField.withoutApproximations: JcField? get() {
         return this.enclosingClass.withoutApproximations.declaredFields.find {
             it.name == this.name && it.isStatic == this.isStatic
         }

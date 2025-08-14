@@ -97,6 +97,7 @@ import org.usvm.memory.foldHeapRefWithStaticAsConcrete
 import org.usvm.mkSizeExpr
 import org.usvm.sizeSort
 import org.usvm.types.first
+import org.usvm.types.single
 import org.usvm.types.singleOrNull
 import org.usvm.util.allocHeapRef
 import org.usvm.util.write

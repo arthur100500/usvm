@@ -34,6 +34,8 @@ import org.usvm.test.api.UTestArithmeticExpression
 import org.usvm.test.api.UTestArrayGetExpression
 import org.usvm.test.api.UTestArrayLengthExpression
 import org.usvm.test.api.UTestArraySetStatement
+import org.usvm.test.api.UTestAssertEqualsCall
+import org.usvm.test.api.UTestAssertThrowsCall
 import org.usvm.test.api.UTestBinaryConditionExpression
 import org.usvm.test.api.UTestBinaryConditionStatement
 import org.usvm.test.api.UTestCastExpression
@@ -45,6 +47,7 @@ import org.usvm.test.api.UTestGetFieldExpression
 import org.usvm.test.api.UTestGetStaticFieldExpression
 import org.usvm.test.api.UTestGlobalMock
 import org.usvm.test.api.UTestInst
+import org.usvm.test.api.UTestInstList
 import org.usvm.test.api.UTestMethodCall
 import org.usvm.test.api.UTestMock
 import org.usvm.test.api.UTestSetFieldStatement

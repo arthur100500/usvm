@@ -71,6 +71,7 @@ import org.usvm.machine.state.returnValue
 import org.usvm.machine.state.throwExceptionAndDropStackFrame
 import org.usvm.machine.state.throwExceptionWithoutStackFrameDrop
 import org.usvm.memory.ULValue
+import org.usvm.memory.UMemory
 import org.usvm.memory.URegisterStackLValue
 import org.usvm.targets.UTargetsSet
 import org.usvm.util.write

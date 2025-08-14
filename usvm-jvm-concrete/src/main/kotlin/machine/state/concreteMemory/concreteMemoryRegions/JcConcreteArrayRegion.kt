@@ -114,7 +114,7 @@ internal class JcConcreteArrayRegion<Sort : USort>(
         address: UConcreteHeapAddress,
         arrayType: JcType,
         sort: Sort,
-        content: Map<UExpr<USizeSort>, UExpr<Sort>>,
+        content: List<UExpr<Sort>>,
         operationGuard: UBoolExpr,
         ownership: MutabilityOwnership
     ): UArrayRegion<JcType, Sort, USizeSort> {
@@ -125,10 +125,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
                     if (arrayType is JcArrayType) arrayType
                     else bindings.typeOf(address) as JcArrayType
                 val elemType = jcArrayType.elementType
-                val elems = content.mapNotNull { (index, value) ->
-                    val idx = marshall.tryExprToObj(index, ctx.cp.int)
+                val elems = content.mapNotNull { value ->
                     val elem = marshall.tryExprToObj(value, elemType)
-                    if (idx.isSome && elem.isSome) (idx.getOrThrow() as Int) to elem.getOrThrow()
+                    if (elem.isSome) elem.getOrThrow()
                     else null
                 }
                 if (elems.size == content.size) {
@@ -218,16 +217,16 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     private fun unmarshallContentsCommon(
         address: UConcreteHeapAddress,
         descriptor: JcType,
-        elements: Map<UExpr<USizeSort>, UExpr<Sort>>
+        elements: List<UExpr<Sort>>
     ) {
         baseRegion = baseRegion.initializeAllocatedArray(address, descriptor, sort, elements, ctx.trueExpr, ownership)
     }
 
     @Suppress("UNCHECKED_CAST")
     fun unmarshallArray(address: UConcreteHeapAddress, obj: Array<*>, desc: JcType) {
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, ctx.cp.objectType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, ctx.cp.objectType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -235,9 +234,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: ByteArray) {
         val elemType = ctx.cp.byte
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -245,9 +244,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: ShortArray) {
         val elemType = ctx.cp.short
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -255,9 +254,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: CharArray) {
         val elemType = ctx.cp.char
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -265,9 +264,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: IntArray) {
         val elemType = ctx.cp.int
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -275,9 +274,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: LongArray) {
         val elemType = ctx.cp.long
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -285,9 +284,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: FloatArray) {
         val elemType = ctx.cp.float
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -295,9 +294,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: DoubleArray) {
         val elemType = ctx.cp.double
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 
@@ -305,9 +304,9 @@ internal class JcConcreteArrayRegion<Sort : USort>(
     fun unmarshallArray(address: UConcreteHeapAddress, obj: BooleanArray) {
         val elemType = ctx.cp.boolean
         val desc = ctx.arrayDescriptorOf(ctx.cp.arrayTypeOf(elemType))
-        val elements = obj.mapIndexed { idx, value ->
-            ctx.mkSizeExpr(idx) to marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
-        }.toMap()
+        val elements = obj.map { value ->
+            marshall.objToExpr<USort>(value, elemType) as UExpr<Sort>
+        }
         unmarshallContentsCommon(address, desc, elements)
     }
 

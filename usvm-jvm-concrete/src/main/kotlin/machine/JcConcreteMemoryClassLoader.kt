@@ -13,11 +13,11 @@ import org.jacodb.impl.features.classpaths.JcUnknownClass
 import org.usvm.concrete.api.internal.InitHelper
 import org.usvm.jvm.concrete.JcConcreteClassLoader
 import org.usvm.jvm.util.JcClassLoaderExt
+import org.usvm.jvm.util.cpWithoutApproximations
 import org.usvm.jvm.util.javaName
 import org.usvm.jvm.util.replace
 import org.usvm.jvm.util.staticFields
 import org.usvm.jvm.util.toByteArray
-import org.usvm.jvm.util.withoutApproximations
 import utils.isInstrumentedClinit
 import utils.isInstrumentedInit
 import utils.isInstrumentedInternalInit
@@ -288,6 +288,8 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
         defineClassRecursively(jcClass, hashSetOf())
             ?: error("Can't define class $jcClass")
 
+    private val cpWithoutApproximations by lazy { cp.cpWithoutApproximations() }
+
     private fun getBytecode(jcClass: JcClassOrInterface): ByteArray {
         val instrumentedMethods = jcClass.declaredMethods.filter {
             it.isInstrumentedClinit || it.isInstrumentedInit || it.isInstrumentedInternalInit
@@ -307,7 +309,7 @@ object JcConcreteMemoryClassLoader : SecureClassLoader(ClassLoader.getSystemClas
                     continue
 
                 val rawInstList = if (isApproximated) {
-                    val newMethod = method.withoutApproximations
+                    val newMethod = with(cpWithoutApproximations) { method.withoutApproximations }
                         ?: error("JcConcreteMemoryClassLoader.getBytecode: unable to find original method $method")
                     newMethod.rawInstList
                 } else { method.rawInstList }

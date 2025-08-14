@@ -451,7 +451,7 @@ internal class JcConcreteMemoryBindings private constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <Value> initializeArray(address: UConcreteHeapAddress, contents: List<Pair<Int, Value>>) {
+    fun <Value> initializeArray(address: UConcreteHeapAddress, contents: List<Value>) {
         val obj = virtToPhys(address)
         if (state == State.MutableWithEffect)
             effectStorage.addObjectToEffect(obj)
@@ -462,63 +462,63 @@ internal class JcConcreteMemoryBindings private constructor(
         when (obj) {
             is IntArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Int
                 }
             }
 
             is ByteArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Byte
                 }
             }
 
             is CharArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Char
                 }
             }
 
             is LongArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Long
                 }
             }
 
             is FloatArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Float
                 }
             }
 
             is ShortArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Short
                 }
             }
 
             is DoubleArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Double
                 }
             }
 
             is BooleanArray -> {
                 check(elemType.notTracked)
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value as Boolean
                 }
             }
 
             is Array<*> -> {
                 obj as Array<Value>
-                for ((index, value) in contents) {
+                for ((index, value) in contents.withIndex()) {
                     obj[index] = value
                 }
             }

@@ -5,6 +5,7 @@ import com.jetbrains.rd.util.lifetime.isAlive
 import kotlinx.coroutines.withTimeout
 import org.jacodb.api.jvm.JcClasspath
 import org.usvm.instrumentation.instrumentation.JcInstrumenterFactory
+import org.usvm.instrumentation.rd.InstrumentedProcess
 import org.usvm.instrumentation.testcase.api.UTestExecutionResult
 import org.usvm.instrumentation.testcase.descriptor.UTestUnexpectedExecutionBuilder
 import org.usvm.instrumentation.util.InstrumentationModuleConstants
