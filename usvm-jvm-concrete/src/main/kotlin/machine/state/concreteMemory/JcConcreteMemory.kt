@@ -593,6 +593,7 @@ open class JcConcreteMemory(
         }
 
         if (concretization || shouldConcretizeMethod(method)) {
+            // TODO: ignore shouldNotInvoke?
             concretize(state, exprResolver, stmt, method)
             return TryConcreteInvokeSuccess()
         }

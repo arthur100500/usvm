@@ -296,10 +296,13 @@ abstract class JcTestStateResolver<T>(
 
     private val cpWithoutApproximations by lazy { ctx.cp.cpWithoutApproximations() }
 
+    private val JcField.isOriginal: Boolean get() =
+        with(cpWithoutApproximations) { isOriginalField }
+
     open fun shouldIgnoreField(typedField: JcTypedField): Boolean {
         return typedField.isStatic
                 || typedField.field.annotations.any { it.name == DummyField::class.java.name }
-                || with(cpWithoutApproximations) { !typedField.field.isOriginalField }
+                || !typedField.field.isOriginal
     }
 
     fun allocateAndInitializeObject(
@@ -341,7 +344,7 @@ abstract class JcTestStateResolver<T>(
                 break
             } else {
                 for (field in cls.declaredFields.filterNot { shouldIgnoreField(it) }) {
-                    check(field.field !is JcEnrichedVirtualField) {
+                    check(field.field !is JcEnrichedVirtualField || field.field.isOriginal) {
                         "Class ${cls.jcClass.name} has approximated field ${field.field} but has no decoder"
                     }
 
