@@ -4,14 +4,16 @@ import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.jacodb.api.jvm.JcClasspath
 import org.usvm.jvm.rendering.spring.JcSpringImportManager
+import org.usvm.jvm.rendering.unsafeRenderer.JcUnsafeImportManager
 import org.usvm.jvm.rendering.unsafeRenderer.JcUnsafeTestFileRenderer
 
 open class JcSpringUnitTestFileRenderer: JcUnsafeTestFileRenderer {
-    override val importManager: JcSpringImportManager
-        get() = super.importManager as JcSpringImportManager
-    protected constructor(cu: CompilationUnit, importManager: JcSpringImportManager, cp: JcClasspath) : super(cu, importManager, cp)
+    override val importManager: JcUnsafeImportManager
+        get() = super.importManager
 
-    protected constructor(packageName: String?, importManager: JcSpringImportManager, cp: JcClasspath) : super(packageName, importManager, cp)
+    protected constructor(cu: CompilationUnit, importManager: JcUnsafeImportManager, cp: JcClasspath) : super(cu, importManager, cp)
+
+    protected constructor(packageName: String?, importManager: JcUnsafeImportManager, cp: JcClasspath) : super(packageName, importManager, cp)
 
     constructor(cu: CompilationUnit, cp: JcClasspath, inlineUsvmUtils: Boolean = false) : this(
         cu,

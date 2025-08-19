@@ -7,12 +7,13 @@ import org.jacodb.api.jvm.JcClasspath
 import org.usvm.jvm.rendering.baseRenderer.JcIdentifiersManager
 import org.usvm.jvm.rendering.spring.JcSpringImportManager
 import org.usvm.jvm.rendering.spring.unitTestRenderer.JcSpringUnitTestRenderer
+import org.usvm.jvm.rendering.unsafeRenderer.JcUnsafeImportManager
 import org.usvm.test.api.UTest
 
 open class JcSpringMvcTestRenderer(
     test: UTest,
     override val classRenderer: JcSpringMvcTestClassRenderer,
-    importManager: JcSpringImportManager,
+    importManager: JcUnsafeImportManager,
     identifiersManager: JcIdentifiersManager,
     cp: JcClasspath,
     name: SimpleName,

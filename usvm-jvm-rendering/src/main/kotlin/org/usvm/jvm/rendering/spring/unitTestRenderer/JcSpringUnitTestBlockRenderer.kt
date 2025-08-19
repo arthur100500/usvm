@@ -16,14 +16,13 @@ import org.jacodb.api.jvm.JcField
 import org.jacodb.api.jvm.JcMethod
 import org.jacodb.api.jvm.JcType
 import org.usvm.jvm.rendering.baseRenderer.JcIdentifiersManager
-import org.usvm.jvm.rendering.spring.JcSpringImportManager
+import org.usvm.jvm.rendering.unsafeRenderer.JcUnsafeImportManager
 import org.usvm.jvm.rendering.unsafeRenderer.JcUnsafeTestBlockRenderer
-import org.usvm.test.api.UTestAllocateMemoryCall
 import org.usvm.test.api.UTestExpression
 
 open class JcSpringUnitTestBlockRenderer protected constructor(
     override val methodRenderer: JcSpringUnitTestRenderer,
-    override val importManager: JcSpringImportManager,
+    override val importManager: JcUnsafeImportManager,
     identifiersManager: JcIdentifiersManager,
     cp: JcClasspath,
     shouldDeclareVar: Set<UTestExpression>,
@@ -40,12 +39,12 @@ open class JcSpringUnitTestBlockRenderer protected constructor(
 ) {
 
     private val utilsName: NameExpr by lazy {
-        NameExpr(importManager.springUtilsName)
+        NameExpr(importManager.usvmUtilsName)
     }
 
     constructor(
         methodRenderer: JcSpringUnitTestRenderer,
-        importManager: JcSpringImportManager,
+        importManager: JcUnsafeImportManager,
         identifiersManager: JcIdentifiersManager,
         cp: JcClasspath,
         shouldDeclareVar: Set<UTestExpression>
