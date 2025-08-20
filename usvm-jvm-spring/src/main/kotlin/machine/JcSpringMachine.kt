@@ -3,6 +3,7 @@ package machine
 import machine.ps.JcConcreteWeightedPathSelector
 import machine.ps.JcSpringMachineLoopTracker
 import machine.ps.JcStatePathTimeoutPathSelector
+import machine.ps.createSpringWeightedPathSelector
 import machine.ps.weighters.JcConcreteBacktrackWeighter
 import machine.ps.weighters.JcSpringDataBaseWeighter
 import machine.ps.weighters.JcSpringEdgeCaseWeighter
@@ -115,20 +116,8 @@ class JcSpringMachine(
                 JcStatePathTimeoutPathSelector(springTimeStatistics, pathSelector, timeout)
             }
         }
-        val mainWeighter = when (jcSpringMachineOptions.springAnalysisMode) {
-            JcSpringAnalysisMode.EdgeCases -> JcSpringEdgeCaseWeighter()
-            JcSpringAnalysisMode.RegressionSuite -> JcSpringRegressionSuite()
-        }
         val springBasePathSelectors = basePathSelectors ?: {
-            val baseWeighter = CombinedStateStableIntWeighter(
-                listOf(
-                    UncoveredStateWeighter(coverageStatistics),
-                    JcSpringDataBaseWeighter(),
-                    mainWeighter
-                )
-            )
-            val eachPeekWeighter = JcConcreteBacktrackWeighter()
-            listOf(JcConcreteWeightedPathSelector(baseWeighter, eachPeekWeighter))
+            listOf(createSpringWeightedPathSelector(jcSpringMachineOptions, coverageStatistics))
         }
         return super.createPathSelector(
             initialStates,

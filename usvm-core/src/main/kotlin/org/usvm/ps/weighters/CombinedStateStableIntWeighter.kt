@@ -2,7 +2,7 @@ package org.usvm.ps.weighters
 
 import org.usvm.ps.StateWeighter
 
-class CombinedStateStableIntWeighter<in State> : CombinedStateWeighter<State, Int, Int> {
+class CombinedStateStableIntWeighter<in State> : CombinedStateWeighter<State, Int, Float> {
 
     constructor(
         weighters: List<StateWeighter<State, Int>>
@@ -10,7 +10,7 @@ class CombinedStateStableIntWeighter<in State> : CombinedStateWeighter<State, In
 
     constructor(
         weighters: List<StateWeighter<State, Int>>,
-        metaWeights: List<Int>
+        metaWeights: List<Float>
     ) : super(
         weighters,
         metaWeights,
