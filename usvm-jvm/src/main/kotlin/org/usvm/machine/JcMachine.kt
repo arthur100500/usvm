@@ -76,6 +76,7 @@ open class JcMachine(
         coverageStatistics: CoverageStatistics<JcMethod, JcInst, JcState>,
         callGraphStatistics: CallGraphStatistics<JcMethod>,
         loopStatisticFactory: () -> StateLoopTracker<*, JcInst, JcState>? = { null },
+        basePathSelectors: (() -> List<UPathSelector<JcState>>)? = null,
         wrappingPathSelector: (UPathSelector<JcState>) -> UPathSelector<JcState> = { it }
     ): UPathSelector<JcState> {
         return createPathSelector(
@@ -87,6 +88,7 @@ open class JcMachine(
             { transparentCfgStatistics() },
             { callGraphStatistics },
             loopStatisticFactory,
+            basePathSelectors,
             wrappingPathSelector
         )
     }

@@ -23,6 +23,18 @@ class DeterministicPriorityCollection<T, Priority>(private val comparator: Compa
         return topElement!!.first
     }
 
+    /**
+     * Takes top `count` elements.
+     */
+    fun takeWithWeight(count: Int): List<Pair<T, Priority>> {
+        if (count <= 0)
+            return emptyList()
+
+        val currentTop = topElement ?: return priorityQueue.take(count)
+
+        return listOf(currentTop) + priorityQueue.take(count - 1)
+    }
+
     override fun update(element: T, priority: Priority) {
         remove(element)
         add(element, priority)

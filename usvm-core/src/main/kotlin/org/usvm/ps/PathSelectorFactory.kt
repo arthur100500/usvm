@@ -36,6 +36,7 @@ private fun <Method, Statement, Target, State> createPathSelector(
     cfgStatisticsFactory: () -> CfgStatistics<Method, Statement>? = { null },
     callGraphStatisticsFactory: () -> CallGraphStatistics<Method>? = { null },
     loopStatisticFactory: () -> StateLoopTracker<*, Statement, State>? = { null },
+    basePathSelectors: (() -> List<UPathSelector<State>>)? = null,
     wrappingPathSelector: (UPathSelector<State>) -> UPathSelector<State> = { it }
 ): UPathSelector<State>
     where Target : UTarget<Statement, Target>,
@@ -46,7 +47,7 @@ private fun <Method, Statement, Target, State> createPathSelector(
 
     val random by lazy { Random(options.randomSeed) }
 
-    val selectors = strategies.map { strategy ->
+    val selectors = basePathSelectors?.let { it() } ?: strategies.map { strategy ->
         when (strategy) {
             PathSelectionStrategy.BFS -> BfsPathSelector()
             PathSelectionStrategy.DFS -> DfsPathSelector()
@@ -157,6 +158,7 @@ fun <Method, Statement, Target, State> createPathSelector(
     cfgStatisticsFactory: () -> CfgStatistics<Method, Statement>? = { null },
     callGraphStatisticsFactory: () -> CallGraphStatistics<Method>? = { null },
     loopStatisticFactory: () -> StateLoopTracker<*, Statement, State>? = { null },
+    basePathSelectors: (() -> List<UPathSelector<State>>)? = null,
     wrappingPathSelector: (UPathSelector<State>) -> UPathSelector<State> = { it }
 ): UPathSelector<State> where Target : UTarget<Statement, Target>, State : UState<*, Method, Statement, *, Target, State> =
     createPathSelector(
@@ -167,6 +169,7 @@ fun <Method, Statement, Target, State> createPathSelector(
         cfgStatisticsFactory,
         callGraphStatisticsFactory,
         loopStatisticFactory,
+        basePathSelectors,
         wrappingPathSelector
     )
 
@@ -179,6 +182,7 @@ fun <Method, Statement, Target, State> createPathSelector(
     cfgStatisticsFactory: () -> CfgStatistics<Method, Statement>? = { null },
     callGraphStatisticsFactory: () -> CallGraphStatistics<Method>? = { null },
     loopStatisticFactory: () -> StateLoopTracker<*, Statement, State>? = { null },
+    basePathSelectors: (() -> List<UPathSelector<State>>)? = null,
     wrappingPathSelector: (UPathSelector<State>) -> UPathSelector<State> = { it }
 ): UPathSelector<State> where Target : UTarget<Statement, Target>, State : UState<*, Method, Statement, *, Target, State> {
     if (options.timeout == Duration.INFINITE || initialStates.size == 1) {
@@ -190,6 +194,7 @@ fun <Method, Statement, Target, State> createPathSelector(
             cfgStatisticsFactory,
             callGraphStatisticsFactory,
             loopStatisticFactory,
+            basePathSelectors,
             wrappingPathSelector
         )
     }
@@ -208,6 +213,7 @@ fun <Method, Statement, Target, State> createPathSelector(
             cfgStatisticsFactory,
             callGraphStatisticsFactory,
             loopStatisticFactory,
+            basePathSelectors,
             wrappingPathSelector
         )
 

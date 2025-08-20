@@ -1,5 +1,6 @@
 package machine
 
 data class JcSpringMachineOptions(
-    val springAnalysisMode: JcSpringAnalysisMode
+    val springTestGenerationMode: JcSpringTestGenerationMode = JcSpringTestGenerationMode.SpringBootTest,
+    val springAnalysisMode: JcSpringAnalysisMode = JcSpringAnalysisMode.EdgeCases,
 )

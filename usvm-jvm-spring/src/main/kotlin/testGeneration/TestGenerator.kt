@@ -1,6 +1,6 @@
 package testGeneration
 
-import machine.JcSpringAnalysisMode
+import machine.JcSpringTestGenerationMode
 import machine.state.JcSpringState
 import machine.state.pinnedValues.JcPinnedKey
 import machine.state.pinnedValues.JcSpringMockedCalls
@@ -95,7 +95,7 @@ private class JcStateSpringTestBuilder(
 
 private fun JcSpringState.createSpringTestKind(testClass: JcClassOrInterface): JcSpringTestKind {
     return when (springAnalysisMode) {
-        JcSpringAnalysisMode.SpringBootTest -> {
+        JcSpringTestGenerationMode.SpringBootTest -> {
             val testAnnotation = testClass.annotations.find {
                 it.name == "org.springframework.boot.test.context.SpringBootTest"
             } ?: error("SpringBootTest annotation not found")
@@ -103,7 +103,7 @@ private fun JcSpringState.createSpringTestKind(testClass: JcClassOrInterface): J
             val applicationClass = annotationValues.single() as JcClassOrInterface
             SpringBootTest(applicationClass)
         }
-        JcSpringAnalysisMode.SpringJpaTest -> TODO("not implemented")
+        JcSpringTestGenerationMode.SpringJpaTest -> TODO("not implemented")
     }
 }
 

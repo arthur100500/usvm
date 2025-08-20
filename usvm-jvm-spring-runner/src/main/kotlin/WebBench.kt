@@ -8,7 +8,7 @@ import generateTestClass
 import loadWebAppBenchCp
 import logTime
 import machine.JcConcreteMachineOptions
-import machine.JcSpringAnalysisMode
+import machine.JcSpringTestGenerationMode
 import machine.JcSpringMachine
 import machine.JcSpringMachineOptions
 import machine.JcSpringTestObserver
@@ -23,10 +23,8 @@ import org.usvm.jvm.rendering.testRenderer.JcTestInfo
 import org.usvm.jvm.util.nonAbstractClasses
 import org.usvm.logger
 import org.usvm.machine.JcMachineOptions
-import org.usvm.jvm.util.transformers.JcStringConcatTransformer
 import org.usvm.test.api.UTest
 import testGeneration.SpringTestInfo
-import util.classpathWithSpringApproximations
 import java.io.File
 import java.io.PrintStream
 import kotlin.io.path.Path
@@ -103,7 +101,7 @@ private fun runWebBench(benchmark: BenchCp) {
 }
 
 fun analyzeBench(benchmark: BenchCp, options: UMachineOptions) {
-    val springAnalysisMode = JcSpringAnalysisMode.SpringBootTest
+    val springAnalysisMode = JcSpringTestGenerationMode.SpringBootTest
     val newBench = generateTestClass(benchmark, springAnalysisMode)
 
     val jcConcreteMachineOptions = JcConcreteMachineOptions(
@@ -112,7 +110,7 @@ fun analyzeBench(benchmark: BenchCp, options: UMachineOptions) {
     )
     newBench.bindMachineOptions(jcConcreteMachineOptions)
     val jcSpringMachineOptions = JcSpringMachineOptions(
-        springAnalysisMode = springAnalysisMode
+        springTestGenerationMode = springAnalysisMode
     )
 
     val cp = newBench.cp

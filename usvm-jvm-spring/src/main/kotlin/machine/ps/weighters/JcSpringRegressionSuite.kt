@@ -4,7 +4,7 @@ import machine.state.JcSpringState
 import org.usvm.machine.state.JcState
 import org.usvm.ps.StateWeighter
 
-class JcSpringDataBaseWeighter: StateWeighter<JcState, Int> {
+class JcSpringRegressionSuite: StateWeighter<JcState, Int> {
 
     override fun weight(state: JcState): Int {
         state as JcSpringState

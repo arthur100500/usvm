@@ -49,6 +49,7 @@ open class JcConcreteMachine(
         coverageStatistics: CoverageStatistics<JcMethod, JcInst, JcState>,
         callGraphStatistics: CallGraphStatistics<JcMethod>,
         loopStatisticFactory: () -> StateLoopTracker<*, JcInst, JcState>?,
+        basePathSelectors: (() -> List<UPathSelector<JcState>>)?,
         wrappingPathSelector: (UPathSelector<JcState>) -> UPathSelector<JcState>
     ): UPathSelector<JcState> {
         var concretePs: JcConcreteMemoryPathSelector? = null
@@ -58,7 +59,8 @@ open class JcConcreteMachine(
             timeStatistics,
             coverageStatistics,
             callGraphStatistics,
-            loopStatisticFactory
+            loopStatisticFactory,
+            basePathSelectors
         ) {
             val ps = JcConcreteMemoryPathSelector(it)
             concretePs = ps

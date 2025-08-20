@@ -4,13 +4,21 @@ import org.usvm.algorithms.DeterministicPriorityCollection
 import org.usvm.machine.state.JcState
 import org.usvm.ps.StateWeighter
 import org.usvm.ps.WeightedPathSelector
+import org.usvm.ps.weighters.stableAdd
 
 class JcConcreteWeightedPathSelector(
-    private val weighter: StateWeighter<JcState, Int>
+    private val baseWeighter: StateWeighter<JcState, Int>,
+    private val eachPeekWeighter: StateWeighter<JcState, Int>
 ) : WeightedPathSelector<JcState, Int>(
     { DeterministicPriorityCollection(Comparator.naturalOrder()) },
-    weighter
+    baseWeighter
 ) {
+    private companion object {
+        private const val TOP_COUNT = 10
+    }
+
+    private val statesCollection get() = priorityCollection as DeterministicPriorityCollection<JcState, Int>
+
     private var fixedState: JcState? = null
     private var deletedState: JcState? = null
 
@@ -23,24 +31,26 @@ class JcConcreteWeightedPathSelector(
     }
 
     override fun peek(): JcState {
-        if (lastAddedStates != null && lastAddedStates!!.isNotEmpty()) {
+        val lastStates = lastAddedStates
+        if (!lastStates.isNullOrEmpty()) {
             val lastForkPoint = (fixedState ?: deletedState!!).forkPoints.statement
             val relevantLastAddedStates =
-                lastAddedStates!!.filter { it.forkPoints.statement == lastForkPoint }
+                lastStates.filter { it.forkPoints.statement == lastForkPoint }
             val relevantStates =
                 if (fixedState != null) relevantLastAddedStates + fixedState!!
                 else relevantLastAddedStates
             // TODO: cache weight?
-            val state = relevantStates.maxBy { weighter.weight(it) }
+            val state = relevantStates.maxBy { eachPeekWeighter.weight(it).stableAdd(baseWeighter.weight(it)) }
             fixState(state)
             return state
         }
 
-        if (fixedState != null) {
+        if (fixedState != null)
             return fixedState!!
-        }
 
-        val state = super.peek()
+        val state = statesCollection.takeWithWeight(TOP_COUNT).maxBy { (state, weight) ->
+            eachPeekWeighter.weight(state).stableAdd(weight)
+        }.first
         fixState(state)
         return state
     }

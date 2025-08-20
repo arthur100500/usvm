@@ -446,7 +446,7 @@ class JcSpringMethodApproximationResolver (
     }
 
     private fun approximateSpringRepositoryMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
-        if (jcSpringMachineOptions.springAnalysisMode == JcSpringAnalysisMode.SpringBootTest && shouldMock(method)) {
+        if (jcSpringMachineOptions.springTestGenerationMode == JcSpringTestGenerationMode.SpringBootTest && shouldMock(method)) {
             if (methodCall.returnSite is JcMockMethodInvokeResult)
                 return false
 
@@ -467,7 +467,7 @@ class JcSpringMethodApproximationResolver (
     }
 
     private fun approximateSpringServiceMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
-        if (jcSpringMachineOptions.springAnalysisMode == JcSpringAnalysisMode.SpringBootTest && shouldMock(method)) {
+        if (jcSpringMachineOptions.springTestGenerationMode == JcSpringTestGenerationMode.SpringBootTest && shouldMock(method)) {
             val returnType = ctx.cp.findType(methodCall.method.returnType.typeName)
             val mockedValue: UExpr<out USort>
             val mockedValueType: JcType

@@ -15,7 +15,7 @@ open class WeightedPathSelector<State, Weight>(
     private val weighter: StateWeighter<State, Weight>
 ) : UPathSelector<State> {
 
-    private val priorityCollection = priorityCollectionFactory()
+    protected val priorityCollection = priorityCollectionFactory()
 
     override fun isEmpty(): Boolean = priorityCollection.count == 0
 

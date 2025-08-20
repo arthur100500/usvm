@@ -7,7 +7,7 @@ import features.JcReplaceGetAppClassLoaderFeature
 import jpa.JcTableInfoCollector
 import kotlinx.coroutines.runBlocking
 import machine.JcConcreteMachineOptions
-import machine.JcSpringAnalysisMode
+import machine.JcSpringTestGenerationMode
 import machine.interpreter.transformers.springjpa.JcDataclassTransformer
 import machine.interpreter.transformers.springjpa.JcTableIdClassTransformer
 import machine.interpreter.transformers.springjpa.JcRepositoryCrudTransformer
@@ -244,7 +244,7 @@ private fun replaceTypeInClassNode(
 }
 
 @Suppress("SameParameterValue")
-fun generateTestClass(benchmark: BenchCp, springAnalysisMode: JcSpringAnalysisMode): BenchCp {
+fun generateTestClass(benchmark: BenchCp, springAnalysisMode: JcSpringTestGenerationMode): BenchCp {
     val cp = benchmark.cp
 
     val springDirFile = File(System.getenv("springDir"))
@@ -278,7 +278,7 @@ fun generateTestClass(benchmark: BenchCp, springAnalysisMode: JcSpringAnalysisMo
         classNode.name = newTestClassSlashName
 
         when (springAnalysisMode) {
-            JcSpringAnalysisMode.SpringBootTest -> {
+            JcSpringTestGenerationMode.SpringBootTest -> {
                 val sprintBootTestAnnotation = classNode.visibleAnnotations.find {
                     it.desc == "org.springframework.boot.test.context.SpringBootTest".jvmName()
                 } ?: error("SpringBootTest annotation not found")
@@ -296,7 +296,7 @@ fun generateTestClass(benchmark: BenchCp, springAnalysisMode: JcSpringAnalysisMo
                 }
             }
 
-            JcSpringAnalysisMode.SpringJpaTest -> TODO("not supported yet")
+            JcSpringTestGenerationMode.SpringJpaTest -> TODO("not supported yet")
         }
 
         replaceTypeInClassNode(classNode, testClassTemplateName, newTestClassName)
@@ -306,7 +306,7 @@ fun generateTestClass(benchmark: BenchCp, springAnalysisMode: JcSpringAnalysisMo
     System.setProperty("generatedTestClass", newTestClassName)
 
     val tablesInfo = DatabaseGenerator(cp, springDirFile, repositories).generateJPADatabase()
-    val isNeedTrackTable = springAnalysisMode == JcSpringAnalysisMode.SpringBootTest
+    val isNeedTrackTable = springAnalysisMode == JcSpringTestGenerationMode.SpringBootTest
 
     val startSpringTemplateName = "generated.org.springframework.boot.StartSpring"
     val newStartSpringName = "NewStartSpring"
