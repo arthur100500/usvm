@@ -13,6 +13,7 @@ class JcSpringEdgeCaseWeighter: StateWeighter<JcState, Int> {
 
     override fun weight(state: JcState): Int {
         state as JcSpringState
+        // TODO: check validation errors
         return if (state.isExceptional) GOOD_WEIGHT else BAD_WEIGHT
     }
 }
