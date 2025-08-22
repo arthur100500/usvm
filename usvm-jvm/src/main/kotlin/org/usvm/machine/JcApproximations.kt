@@ -22,12 +22,14 @@ import org.jacodb.api.jvm.ext.byte
 import org.jacodb.api.jvm.ext.char
 import org.jacodb.api.jvm.ext.double
 import org.jacodb.api.jvm.ext.findClassOrNull
+import org.jacodb.api.jvm.ext.findType
 import org.jacodb.api.jvm.ext.float
 import org.jacodb.api.jvm.ext.ifArrayGetElementType
 import org.jacodb.api.jvm.ext.int
 import org.jacodb.api.jvm.ext.long
 import org.jacodb.api.jvm.ext.objectClass
 import org.jacodb.api.jvm.ext.objectType
+import org.jacodb.api.jvm.ext.packageName
 import org.jacodb.api.jvm.ext.short
 import org.jacodb.api.jvm.ext.toType
 import org.jacodb.api.jvm.ext.void
@@ -39,7 +41,6 @@ import org.usvm.UConcreteHeapRef
 import org.usvm.UExpr
 import org.usvm.UFpSort
 import org.usvm.UHeapRef
-import org.usvm.USort
 import org.usvm.api.Engine
 import org.usvm.api.SymbolicIdentityMap
 import org.usvm.api.SymbolicList
@@ -80,7 +81,6 @@ import org.usvm.api.readArrayIndex
 import org.usvm.api.readArrayLength
 import org.usvm.api.readField
 import org.usvm.api.writeField
-import org.usvm.collection.array.UArrayIndexLValue
 import org.usvm.collection.array.length.UArrayLengthLValue
 import org.usvm.collection.field.UFieldLValue
 import org.usvm.getIntValue
@@ -135,7 +135,7 @@ open class JcMethodApproximationResolver(
     }
 
     protected open fun approximate(callJcInst: JcMethodCall): Boolean {
-        if (skipMethodIfThrowable(callJcInst)) {
+        if (skipMethod(callJcInst)) {
             return true
         }
 
@@ -884,7 +884,7 @@ open class JcMethodApproximationResolver(
         return false
     }
 
-    private fun skipMethodIfThrowable(methodCall: JcMethodCall): Boolean = with(methodCall) {
+    protected open fun skipMethod(methodCall: JcMethodCall): Boolean = with(methodCall) {
         if (method.enclosingClass.name == "java.lang.Throwable") {
             // We assume that methods of java.lang.Throwable are not really required to be analysed and can be simply mocked
             mockMethod(scope, methodCall, applicationGraph)

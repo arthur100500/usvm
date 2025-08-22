@@ -29,6 +29,7 @@ import org.usvm.machine.JcContext
 import org.usvm.machine.JcMethodApproximationResolver
 import org.usvm.machine.JcMethodCall
 import org.usvm.machine.JcVirtualMethodCallInst
+import org.usvm.machine.mocks.mockMethod
 import org.usvm.machine.state.JcState
 import org.usvm.machine.state.newStmt
 import org.usvm.machine.state.skipMethodInvocationWithValue
@@ -43,6 +44,8 @@ open class JcConcreteMethodApproximationResolver(
     override fun approximate(callJcInst: JcMethodCall): Boolean {
         return approximateInternal(callJcInst) || super.approximate(callJcInst)
     }
+
+    override fun skipMethod(methodCall: JcMethodCall): Boolean = false
 
     private fun approximateInternal(callJcInst: JcMethodCall): Boolean {
         if (callJcInst.method.isStatic) {

@@ -77,8 +77,7 @@ open class JcExecutor(customClassLoader: ClassLoader? = null) {
 
     private fun unfoldException(e: Throwable): Throwable {
         return when {
-            e is ExecutionException && e.cause != null -> unfoldException(e.cause!!)
-            e is InvocationTargetException -> e.targetException
+            e is ExecutionException && e.cause != null -> e.cause!!
             else -> e
         }
     }

@@ -1,7 +1,6 @@
 package machine.state.concreteMemory
 
 import io.ksmt.utils.asExpr
-import java.lang.reflect.Method
 import machine.JcConcreteInvocationResult
 import machine.JcConcreteMachineOptions
 import machine.JcConcreteMemoryClassLoader
@@ -73,7 +72,6 @@ import org.usvm.memory.UMemoryRegionId
 import org.usvm.memory.URegistersStack
 import org.usvm.jvm.util.name
 import org.usvm.jvm.util.toJavaConstructor
-import org.usvm.jvm.util.toJavaExecutable
 import org.usvm.jvm.util.toJavaMethod
 import org.usvm.jvm.util.typedField
 import org.usvm.model.UModelBase
@@ -91,6 +89,7 @@ import utils.setStaticFieldValue
 import utils.toJavaField
 import utils.toJavaMethod
 import utils.typeIsRuntimeGenerated
+import java.lang.reflect.InvocationTargetException
 
 //region Concrete Memory
 
@@ -486,6 +485,47 @@ open class JcConcreteMemory(
         return success
     }
 
+    private fun unfoldException(exception: Throwable): Throwable {
+        return when {
+            exception is InvocationTargetException && exception.targetException != null -> {
+                val target = exception.targetException
+                when {
+                    target is InvocationTargetException && target.targetException != null -> target.targetException!!
+                    else -> target
+                }
+            }
+            else -> exception
+        }
+    }
+
+    private fun executeWithResult(
+        method: JcMethod,
+        thisObj: Any?,
+        parameters: List<Any?>
+    ): Pair<Any?, Throwable?> {
+        val invokeHelperClass = JcConcreteMemoryClassLoader.loadClass(InvokeHelper::class.java.typeName)
+        val (resultObj, exception) = executor.executeWithResult {
+            if (method.isConstructor) {
+                invokeHelperClass.declaredMethods.single { it.name == InvokeHelper::newInstance.javaName }
+                    .invoke(
+                        null,
+                        method.toJavaConstructor(JcConcreteMemoryClassLoader),
+                        parameters.toTypedArray()
+                    )
+            } else {
+                invokeHelperClass.declaredMethods.single { it.name == InvokeHelper::invokeMethod.javaName }
+                    .invoke(
+                        null,
+                        method.toJavaMethod(JcConcreteMemoryClassLoader),
+                        thisObj,
+                        parameters.toTypedArray()
+                    )
+            }
+        }
+
+        return resultObj to exception?.let { unfoldException(it) }
+    }
+
     private fun invoke(
         state: JcState,
         exprResolver: JcExprResolver,
@@ -501,25 +541,7 @@ open class JcConcreteMemory(
                 bindings.effectStorage.addObjectToEffectRec(arg)
         }
 
-        val (resultObj, exception) = executor.executeWithResult {
-            val invokeHelperClass = JcConcreteMemoryClassLoader.loadClass(InvokeHelper::class.java.typeName)
-            if (method.isConstructor) {
-                invokeHelperClass.declaredMethods.single { it.name == InvokeHelper::newInstance.javaName }
-                    .invoke(
-                        null,
-                        method.toJavaConstructor(JcConcreteMemoryClassLoader),
-                        objParameters.toTypedArray()
-                    )
-            } else {
-                invokeHelperClass.declaredMethods.single { it.name == InvokeHelper::invokeMethod.javaName }
-                    .invoke(
-                        null,
-                        method.toJavaMethod(JcConcreteMemoryClassLoader),
-                        thisObj,
-                        objParameters.toTypedArray()
-                    )
-            }
-        }
+        val (resultObj, exception) = executeWithResult(method, thisObj, objParameters)
 
         if (exception == null) {
             // No exception
@@ -598,8 +620,10 @@ open class JcConcreteMemory(
             return TryConcreteInvokeSuccess()
         }
 
+        val isExceptionCtor = method.isExceptionCtor
         // TODO: change on checking coverage zone #CM
-        if (jcConcreteMachineOptions.isProjectLocation(method))
+        val isProjectLocation = jcConcreteMachineOptions.isProjectLocation(method)
+        if (isProjectLocation && !isExceptionCtor)
             return TryConcreteInvokeFail(false)
 
         val parameterInfos = method.parameters
