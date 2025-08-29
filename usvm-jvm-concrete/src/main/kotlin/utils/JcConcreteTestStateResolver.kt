@@ -36,4 +36,8 @@ abstract class JcConcreteTestStateResolver<T>(
 
         return super.resolveObject(ref, heapRef, type)
     }
+
+    override fun shouldSkipInitialization(type: JcClassType): Boolean {
+        return false
+    }
 }
